@@ -1,0 +1,49 @@
+{
+  "dataset_root": "D:\\DISERTASI_S3\\WIWIK\\DATASET_L2\\EndekGAN\\EndekGAN_Dataset",
+  "metadata_expert_guided": "D:\\DISERTASI_S3\\WIWIK\\DATASET_L2\\EndekGAN\\EndekGAN_Dataset\\metadata_expert_guided.csv",
+  "experiment_mode": "transformer_text",
+  "run_id": "20260605_190722",
+  "total_raw_images": 372,
+  "total_valid_images": 372,
+  "total_clean_no_md5_duplicates": 370,
+  "bad_images": 0,
+  "duplicate_md5_files": 4,
+  "train_images": 296,
+  "val_images": 37,
+  "test_images": 37,
+  "class_distribution_clean": {
+    "flora": 147,
+    "dekoratif": 112,
+    "geometris": 58,
+    "fauna": 53
+  },
+  "class_distribution_train": {
+    "flora": 118,
+    "dekoratif": 90,
+    "geometris": 46,
+    "fauna": 42
+  },
+  "class_distribution_val": {
+    "flora": 15,
+    "dekoratif": 11,
+    "geometris": 6,
+    "fauna": 5
+  },
+  "class_distribution_test": {
+    "flora": 14,
+    "dekoratif": 11,
+    "geometris": 6,
+    "fauna": 6
+  },
+  "unique_prompts": 369,
+  "image_size": 256,
+  "batch_size": 16,
+  "epochs": 400,
+  "generator_params": 6171299,
+  "discriminator_params": 7295713,
+  "text_embed_dim": 384,
+  "lr_g": 0.0002,
+  "lr_d": 0.0001,
+  "balanced_sampler": true,
+  "output_dir": "D:\\DISERTASI_S3\\WIWIK\\DATASET_L2\\EndekGAN\\EndekGAN_Dataset\\outputs_EndekGAN_ExpertGuided_transformer_text_20260605_190722"
+}
