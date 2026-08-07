@@ -1,6 +1,6 @@
 # EndekGAN-T2I
 
-## An Expert-Guided Text-to-Image Conditional GAN Baseline for Balinese Endek Textile Motif Generation
+## EndekGAN-T2I: A Design-Knowledge-Conditioned Text-to-Image GAN Baseline for Limited-Data Balinese Endek Motif Generation
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.x-ee4c2c.svg)](https://pytorch.org/)
