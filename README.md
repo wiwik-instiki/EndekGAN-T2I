@@ -101,7 +101,7 @@ Two exact duplicate pairs were identified; one redundant file from each pair was
 The final dataset is imbalanced, with flora and decorative motifs represented more frequently than fauna and geometric motifs.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/wiwik-instiki/EndekGAN-T2I/main/figures/Figure%201.png" width="760" alt="Representative Endek dataset samples">
+  <img src="./figures/figure1_endek_dataset_samples.png" width="760" alt="Representative Endek dataset samples">
 </p>
 
 <p align="center"><b>Figure 1.</b> Representative samples from the flora, fauna, decorative, and geometric categories.</p>
@@ -431,7 +431,7 @@ Discriminator parameter count:
 ```
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/wiwik-instiki/EndekGAN-T2I/main/figures/Figure%202%20New.png" width="1050" alt="EndekGAN-T2I architecture">
+  <img src="./figures/figure2_endekgan_t2i_architecture.png" width="1050" alt="EndekGAN-T2I architecture">
 </p>
 
 <p align="center"><b>Figure 2.</b> EndekGAN-T2I architecture showing the structured prompt representation, class embedding, separate condition projectors, conditional generator, projection discriminator, and training objectives.</p>
@@ -692,7 +692,7 @@ The repository therefore does **not** claim completed expert validation, cultura
 ## Generated Endek-like samples
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/wiwik-instiki/EndekGAN-T2I/main/figures/Figure%203%20New.png" width="1050" alt="Multi-seed generated Endek-like samples">
+  <img src="./figures/figure3_generated_samples.png" width="1050" alt="Multi-seed generated Endek-like samples">
 </p>
 
 <p align="center"><b>Figure 3.</b> Multi-seed comparison of generated Endek-like samples across the <code>cat</code>, <code>hash_text</code>, and <code>transformer_text</code> conditioning strategies.</p>
@@ -724,7 +724,7 @@ These differences indicate greater visual variation but do not independently pro
 ## Class-wise FID
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/wiwik-instiki/EndekGAN-T2I/main/figures/Figure%204_Classwise_FID_EndekGAN.png" width="950" alt="Class-wise FID">
+  <img src="./figures/figure4_classwise_fid.png" width="950" alt="Class-wise FID">
 </p>
 
 <p align="center"><b>Figure 4.</b> Class-wise FID across seeds 42, 123, and 2025. Lower values indicate smaller feature-distribution distance.</p>
@@ -741,7 +741,7 @@ No conditioning strategy achieved the lowest FID across all motif categories.
 ## Class-wise KID
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/wiwik-instiki/EndekGAN-T2I/main/figures/Figure5_Classwise_KID_EndekGAN%281%29.png" width="950" alt="Class-wise KID">
+  <img src="./figures/figure5_classwise_kid.png" width="950" alt="Class-wise KID">
 </p>
 
 <p align="center"><b>Figure 5.</b> Class-wise KID across seeds 42, 123, and 2025. Lower values indicate smaller distributional discrepancy.</p>
@@ -758,7 +758,7 @@ The conditioning effect is therefore category dependent.
 ## Macro-averaged class-wise FID
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/wiwik-instiki/EndekGAN-T2I/main/figures/Figure6_macro_fid_600dpi%281%29.png" width="900" alt="Macro-averaged class-wise FID">
+  <img src="./figures/figure6_macro_fid.png" width="900" alt="Macro-averaged class-wise FID">
 </p>
 
 <p align="center"><b>Figure 6.</b> Macro-averaged class-wise FID for the three conditioning strategies.</p>
@@ -766,7 +766,7 @@ The conditioning effect is therefore category dependent.
 ## Macro-averaged class-wise KID
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/wiwik-instiki/EndekGAN-T2I/main/figures/Figure7_macro_kid_600dpi%281%29.png" width="900" alt="Macro-averaged class-wise KID">
+  <img src="./figures/figure7_macro_kid.png" width="900" alt="Macro-averaged class-wise KID">
 </p>
 
 <p align="center"><b>Figure 7.</b> Macro-averaged class-wise KID for the three conditioning strategies.</p>
@@ -786,7 +786,7 @@ The Friedman tests did not establish statistically significant superiority among
 # Training Behaviour
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/wiwik-instiki/EndekGAN-T2I/main/figures/Figure8_training_curves_600dpi%282%29.png" width="1050" alt="Training-loss trajectories">
+  <img src="./figures/figure8_training_curves.png" width="1050" alt="Training-loss trajectories">
 </p>
 
 <p align="center"><b>Figure 8.</b> Generator, discriminator, and feature-matching loss trajectories for the nine experimental runs.</p>
