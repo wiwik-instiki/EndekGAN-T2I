@@ -20,23 +20,6 @@ The study is positioned as a **transparent empirical baseline for conditioning a
 
 ---
 
-## Repository Figures
-
-The manuscript figures are stored in [`figures/`](figures/).
-
-| Figure | Description |
-|---|---|
-| Fig. 1 | Representative samples from the four Endek motif categories |
-| Fig. 2 | EndekGAN-T2I architecture and training objectives |
-| Fig. 3 | Multi-seed comparison of generated Endek-like samples |
-| Fig. 4 | Class-wise FID across the three conditioning strategies |
-| Fig. 5 | Class-wise KID across the three conditioning strategies |
-| Fig. 6 | Macro-averaged class-wise FID |
-| Fig. 7 | Macro-averaged class-wise KID |
-| Fig. 8 | Generator, discriminator, and feature-matching loss trajectories |
-
----
-
 ## Table of Contents
 
 1. [Research Objective](#research-objective)
@@ -99,11 +82,11 @@ Three conditioning representations are evaluated using seeds **42**, **123**, an
 
 The initial collection contained **372 JPEG images** organized into four motif categories. All images passed readability validation. Exact duplicates were identified using MD5 hashes.
 
-For image \(x_i\),
+For image \(x_i\):
 
-$$
-m_i=\operatorname{MD5}(x_i).
-$$
+```math
+m_i = \mathrm{MD5}(x_i).
+```
 
 Two exact duplicate pairs were identified; one redundant file from each pair was removed.
 
@@ -118,7 +101,7 @@ Two exact duplicate pairs were identified; one redundant file from each pair was
 The final dataset is imbalanced, with flora and decorative motifs represented more frequently than fauna and geometric motifs.
 
 <p align="center">
-  <img src="figures/Figure%201.png" width="760" alt="Representative Endek dataset samples">
+  <img src="https://raw.githubusercontent.com/wiwik-instiki/EndekGAN-T2I/main/figures/Figure%201.png" width="760" alt="Representative Endek dataset samples">
 </p>
 
 <p align="center"><b>Figure 1.</b> Representative samples from the flora, fauna, decorative, and geometric categories.</p>
@@ -127,14 +110,7 @@ The final dataset is imbalanced, with flora and decorative motifs represented mo
 
 The original Endek images are retained in the internal research collection and are **not redistributed in this public repository because of source-ownership restrictions**.
 
-The repository therefore exposes derived research artifacts such as:
-
-- metadata;
-- split files;
-- experiment configurations;
-- generated samples;
-- training logs; and
-- aggregate evaluation results.
+The repository therefore exposes derived research artifacts such as metadata, split files, experiment configurations, generated samples, training logs, and aggregate evaluation results.
 
 This repository should be interpreted as a **transparent and traceable experimental record**, not as a fully self-contained public image dataset.
 
@@ -143,8 +119,6 @@ This repository should be interpreted as a **transparent and traceable experimen
 # Structured Prompt Construction
 
 Each image is paired with a **structured Indonesian-language prompt** derived from a controlled Endek design-knowledge schema.
-
-The structured condition extends motif category with:
 
 | Attribute | Role |
 |---|---|
@@ -172,22 +146,20 @@ Representative controlled values include:
 
 ## Deterministic attribute selection
 
-Let \(V_k\) denote the controlled vocabulary for attribute group \(k\), and let \(q_{i,k}\) be a deterministic string constructed from the class label, filename, and attribute identifier. The selected attribute is
+Let \(V_k\) denote the controlled vocabulary for attribute group \(k\), and let \(q_{i,k}\) be the deterministic string constructed from the class label, filename, and attribute identifier.
 
-$$
+```math
 a_{i,k}
 =
-V_k
-\left[
-\operatorname{Int}_{16}
-\left(
-\operatorname{MD5}(q_{i,k})
+V_k\!\left[
+\mathrm{Int}_{16}\!\left(
+\mathrm{MD5}(q_{i,k})
 \right)
 \bmod |V_k|
 \right].
-$$
+```
 
-Here, \(\operatorname{Int}_{16}(\cdot)\) converts the hexadecimal MD5 digest into an integer.
+Here, \(\mathrm{Int}_{16}(\cdot)\) denotes conversion of the hexadecimal MD5 digest into an integer.
 
 This procedure produced:
 
@@ -198,7 +170,7 @@ The prompts are **deterministic design-knowledge conditions**. They are **not ma
 
 ## Prompt language
 
-The prompt strings used during model training are in **Indonesian**. The following is an English translation of the template for readability:
+The actual prompts supplied to the text-representation pipeline are generated in **Indonesian**. The following is an English translation for readability:
 
 ```text
 A Balinese Endek {class} motif inspired by {motif source}.
@@ -231,7 +203,7 @@ Each seed controls:
 - weighted sampling; and
 - latent-noise generation.
 
-Therefore, the three seeds represent **complete seed-specific experimental repetitions**, not repeated initialization on one fixed data split.
+Therefore, the reported runs are **complete seed-specific experimental repetitions**, not repeated model initialization under one fixed data split.
 
 ## Image preprocessing
 
@@ -259,15 +231,15 @@ Validation and test preprocessing is deterministic.
 
 ## Inverse-frequency weighted sampling
 
-For each training image \(i\), let \(n_{y_i}\) denote the number of training images in its class. The sampling weight is
+For training sample \(i\), let \(n_{y_i}\) denote the number of training images belonging to its class.
 
-$$
-\alpha_i=\frac{1}{n_{y_i}}.
-$$
+```math
+\alpha_i = \frac{1}{n_{y_i}}.
+```
 
 Sampling is performed with replacement. With 296 training records, batch size 16, and `drop_last=True`:
 
-$$
+```math
 N_{\mathrm{eff}}
 =
 16
@@ -276,78 +248,76 @@ N_{\mathrm{eff}}
 \right\rfloor
 =
 288.
-$$
+```
 
-Because four classes are sampled with inverse-frequency weighting, the expected exposure per class is approximately
+With four classes, the expected class exposure per epoch is:
 
-$$
+```math
 \mathbb{E}[M_k]
 =
 \frac{N_{\mathrm{eff}}}{4}
 =
 72.
-$$
+```
 
-Weighted sampling balances **exposure frequency** but does not increase the number of unique minority-class images.
+Weighted sampling balances exposure frequency; it does **not** create additional unique minority-class images.
 
 ---
 
 # Conditioning Representations
 
-All variants use the same main generator, discriminator, and optimization settings within a seed.
+All three variants retain the same main generator, discriminator, and optimization configuration within a seed.
 
 ## 1. `cat`: category-conditioned baseline
 
-The prompt content is ignored. A deterministic 384-dimensional sparse category representation is generated from the category label:
+The `cat` variant ignores prompt content and constructs a deterministic 384-dimensional sparse category representation. The category position is:
 
-$$
+```math
 j_y
 =
-\operatorname{Int}_{16}
-\left(
-\operatorname{MD5}(y)
+\mathrm{Int}_{16}\!\left(
+\mathrm{MD5}(y)
 \right)
 \bmod 384.
-$$
+```
 
-The resulting 384-dimensional vector contains one non-zero entry at \(j_y\).
+The corresponding 384-dimensional vector contains one non-zero entry at \(j_y\).
 
-Because the architecture also uses a trainable 64-dimensional class embedding, `cat` is described as a **category-conditioned baseline with deterministic label encoding**.
+Because the model also uses a trainable 64-dimensional class embedding, this variant is described as a **category-conditioned baseline with deterministic label encoding**.
 
 ## 2. `hash_text`: hash-based lexical conditioning
 
-Each prompt token \(w_k\) is mapped into one of 384 bins:
+Each prompt token \(w_k\) is deterministically mapped into one of 384 bins:
 
-$$
+```math
 j_k
 =
-\operatorname{Int}_{16}
-\left(
-\operatorname{MD5}(w_k)
+\mathrm{Int}_{16}\!\left(
+\mathrm{MD5}(w_k)
 \right)
 \bmod 384.
-$$
+```
 
-Let \(\widetilde{e}_t\) denote the accumulated token-count vector. The final representation is L2-normalized:
+Let \(\widetilde{e}_t\) denote the accumulated token-count vector. The final lexical representation is L2-normalized:
 
-$$
+```math
 e_t^{(\mathrm{hash})}
 =
 \frac{\widetilde{e}_t}
-{\|\widetilde{e}_t\|_2+\varepsilon}.
-$$
+{\left\|\widetilde{e}_t\right\|_2+\varepsilon}.
+```
 
-This representation preserves lexical occurrence but does not explicitly encode word order or semantic relationships.
+This representation captures lexical occurrence but does not explicitly model word order or semantic relationships.
 
 ## 3. `transformer_text`: multilingual transformer conditioning
 
-The semantic variant uses the frozen multilingual sentence encoder
+The semantic variant uses the frozen multilingual model:
 
 ```text
 sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
 ```
 
-with:
+Configuration:
 
 ```text
 Embedding dimension : 384
@@ -357,31 +327,34 @@ Normalization       : L2
 Fine-tuning         : disabled
 ```
 
-Let \(H=(h_1,\ldots,h_L)\) be the token embeddings and \(m_j\in\{0,1\}\) the attention mask. Masked mean pooling is
+Let \(h_j\) denote token embedding \(j\), and \(m_j\in\{0,1\}\) its attention-mask value. Masked mean pooling is:
 
-$$
+```math
 \bar{e}_t
 =
-\frac{\sum_{j=1}^{L}m_j h_j}
-{\sum_{j=1}^{L}m_j}.
-$$
+\frac{
+\sum_{j=1}^{L} m_j h_j
+}{
+\sum_{j=1}^{L} m_j
+}.
+```
 
-The pooled representation is normalized as
+The pooled representation is then normalized:
 
-$$
+```math
 e_t^{(\mathrm{tr})}
 =
 \frac{\bar{e}_t}
-{\|\bar{e}_t\|_2+\varepsilon}.
-$$
+{\left\|\bar{e}_t\right\|_2+\varepsilon}.
+```
 
-Transformer parameters remain frozen, and text embeddings are precomputed before adversarial training.
+Transformer parameters remain frozen, and the text embeddings are computed before adversarial training.
 
 ---
 
 # EndekGAN-T2I Architecture
 
-The architecture uses:
+The architecture contains:
 
 - a 384-dimensional text/category representation \(e_t\);
 - a trainable 64-dimensional class embedding \(e_y\);
@@ -389,8 +362,6 @@ The architecture uses:
 - a 128-dimensional latent vector \(z\);
 - a conditional generator \(G\); and
 - a projection discriminator \(D\).
-
-## Representation dimensions
 
 | Component | Dimension |
 |---|---:|
@@ -404,37 +375,33 @@ The architecture uses:
 
 ## Separate condition projectors
 
-The generator and discriminator use different learned projections:
-
-$$
-c_G=P_G([e_t;e_y]),
+```math
+c_G = P_G([e_t;e_y]),
 \qquad
-c_D=P_D([e_t;e_y]),
-$$
+c_D = P_D([e_t;e_y]),
+```
 
-where
+with
 
-$$
-c_G,c_D\in\mathbb{R}^{256}.
-$$
+```math
+c_G,c_D \in \mathbb{R}^{256}.
+```
 
 ## Conditional generation
 
-Latent noise is sampled as
+```math
+z \sim \mathcal{N}(0,I_{128}),
+```
 
-$$
-z\sim\mathcal{N}(0,I_{128}).
-$$
+and
 
-The generated image is
+```math
+\widehat{x} = G(z,c_G).
+```
 
-$$
-\widehat{x}=G(z,c_G).
-$$
+The concatenated latent-condition vector is projected into a \(4\times4\) feature tensor and progressively upsampled to \(256\times256\). The final RGB output uses `tanh`.
 
-The generator projects the concatenated latent-condition vector into a \(4\times4\) feature tensor and progressively upsamples it to \(256\times256\). The final layer uses `tanh`.
-
-Generator parameters:
+Generator parameter count:
 
 ```text
 6,171,299
@@ -442,9 +409,9 @@ Generator parameters:
 
 ## Projection discriminator
 
-Let \(h(x)\in\mathbb{R}^{512}\) denote the discriminator image representation after convolutional feature extraction and global sum pooling. The conditional score is
+Let \(h(x)\in\mathbb{R}^{512}\) denote the image representation produced by the discriminator after convolutional feature extraction and global sum pooling.
 
-$$
+```math
 D(x,t,y)
 =
 u^\top h(x)
@@ -453,18 +420,18 @@ u^\top h(x)
 h(x),
 V c_D
 \right\rangle.
-$$
+```
 
-This combines unconditional visual realism with compatibility between the image representation and the supplied condition.
+The first term represents unconditional realism, while the projection term represents image-condition compatibility.
 
-Discriminator parameters:
+Discriminator parameter count:
 
 ```text
 7,295,713
 ```
 
 <p align="center">
-  <img src="figures/Figure%202%20New.png" width="1000" alt="EndekGAN-T2I architecture">
+  <img src="https://raw.githubusercontent.com/wiwik-instiki/EndekGAN-T2I/main/figures/Figure%202%20New.png" width="1050" alt="EndekGAN-T2I architecture">
 </p>
 
 <p align="center"><b>Figure 2.</b> EndekGAN-T2I architecture showing the structured prompt representation, class embedding, separate condition projectors, conditional generator, projection discriminator, and training objectives.</p>
@@ -475,9 +442,7 @@ Discriminator parameters:
 
 ## Discriminator hinge loss
 
-The discriminator is optimized using
-
-$$
+```math
 \mathcal{L}^{\mathrm{hinge}}_D
 =
 \mathbb{E}_{x,t,y}
@@ -488,20 +453,20 @@ $$
 \mathbb{E}_{z,t,y}
 \left[
 \max\left(0,1+D(\widehat{x},t,y)\right)
-\right],
-$$
+\right].
+```
 
-with
+The generated sample is:
 
-$$
-\widehat{x}=G(z,c_G).
-$$
+```math
+\widehat{x}=G(z,c_G),
+```
 
-The discriminator condition in both terms is \(c_D=P_D([e_t;e_y])\).
+while the discriminator uses the discriminator-side condition \(c_D=P_D([e_t;e_y])\).
 
 ## Generator adversarial loss
 
-$$
+```math
 \mathcal{L}^{\mathrm{adv}}_G
 =
 -
@@ -509,13 +474,13 @@ $$
 \left[
 D(\widehat{x},t,y)
 \right].
-$$
+```
 
 ## Feature-matching loss
 
-Let \(h(\cdot)\) denote the discriminator feature representation. The batch-mean feature-matching loss is
+Let \(B\) denote the batch size and \(h(\cdot)\) the discriminator feature representation.
 
-$$
+```math
 \mathcal{L}_{FM}
 =
 \left\|
@@ -523,23 +488,23 @@ $$
 -
 \frac{1}{B}\sum_{i=1}^{B}h(\widehat{x}_i)
 \right\|_1.
-$$
+```
 
-The complete generator loss is
+The complete generator objective is:
 
-$$
+```math
 \mathcal{L}_G
 =
 \mathcal{L}^{\mathrm{adv}}_G
 +
 5\mathcal{L}_{FM}.
-$$
+```
 
 ## Lazy R1 regularization
 
-R1 regularization is applied to real images every 16 discriminator updates:
+The unscaled R1 term is:
 
-$$
+```math
 R_1
 =
 \frac{\gamma}{2}
@@ -551,23 +516,21 @@ R_1
 \right],
 \qquad
 \gamma=5.
-$$
+```
+
+R1 is evaluated every **16 discriminator updates** using lazy regularization. On an R1 update, the implementation scales the regularization contribution by the interval to preserve its expected strength across updates.
 
 ## Exponential moving average
 
-The EMA generator parameters are updated as
-
-$$
+```math
 \theta_{\mathrm{EMA}}^{(k)}
 =
-0.999\,
-\theta_{\mathrm{EMA}}^{(k-1)}
+0.999\,\theta_{\mathrm{EMA}}^{(k-1)}
 +
-0.001\,
-\theta_G^{(k)}.
-$$
+0.001\,\theta_G^{(k)}.
+```
 
-The EMA generator is used for sampling and quantitative evaluation.
+The EMA generator is used for sampling and evaluation.
 
 ---
 
@@ -597,15 +560,11 @@ The EMA generator is used for sampling and quantitative evaluation.
 | Seeds | 42, 123, 2025 |
 | Conditioning variants | `cat`, `hash_text`, `transformer_text` |
 
-Total experiments:
+Total experiment count:
 
-$$
-3\ \text{conditioning strategies}
-\times
-3\ \text{seeds}
-=
-9\ \text{runs}.
-$$
+```text
+3 conditioning strategies × 3 seeds = 9 runs
+```
 
 ---
 
@@ -613,15 +572,13 @@ $$
 
 ## Generated evaluation
 
-For each trained run, the EMA generator produces
+For each trained run, the EMA generator produces:
 
 ```text
 128 generated images per motif category
-4 motif categories
+× 4 motif categories
 = 512 generated images per run
 ```
-
-The principal quantitative comparison uses **class-wise FID and KID**.
 
 Available real test images:
 
@@ -632,102 +589,101 @@ Available real test images:
 | Decorative | 11 |
 | Geometric | 6 |
 
-Because only 6-14 real test images are available per class, the class-wise FID and KID values are treated as **exploratory diagnostics**, not definitive large-sample estimates.
+Because only 6-14 real test images are available per class, class-wise FID and KID values are interpreted as **exploratory diagnostics**, not definitive large-sample estimates.
 
 ## Fréchet Inception Distance
 
-For real-feature mean/covariance \((\mu_r,\Sigma_r)\) and generated-feature mean/covariance \((\mu_g,\Sigma_g)\),
+For real-feature mean and covariance \((\mu_r,\Sigma_r)\) and generated-feature mean and covariance \((\mu_g,\Sigma_g)\):
 
-$$
-\operatorname{FID}
+```math
+\mathrm{FID}
 =
-\|\mu_r-\mu_g\|_2^2
+\left\|
+\mu_r-\mu_g
+\right\|_2^2
 +
-\operatorname{Tr}
+\mathrm{Tr}
 \left(
 \Sigma_r+\Sigma_g
 -
-2\left(\Sigma_r\Sigma_g\right)^{1/2}
+2
+\left(
+\Sigma_r\Sigma_g
+\right)^{1/2}
 \right).
-$$
+```
 
 Lower FID indicates smaller feature-distribution distance.
 
 ## Kernel Inception Distance
 
-KID is reported using the implemented MMD-based estimator on Inception features. Conceptually,
+KID is the squared maximum mean discrepancy between real and generated Inception-feature distributions:
 
-$$
-\operatorname{KID}
+```math
+\mathrm{KID}
 =
-\operatorname{MMD}^2
+\mathrm{MMD}^2
 \left(
 \mathcal{F}_r,
 \mathcal{F}_g
 \right).
-$$
+```
 
 Lower KID indicates smaller distributional discrepancy.
 
 ## Intra-prompt diversity
 
-For \(m\) images generated under the same conditioning setting, pixel-space diversity is computed as the mean pairwise normalized squared difference:
+For \(m\) images generated under the same conditioning setting:
 
-$$
-\operatorname{Diversity}
+```math
+\mathrm{Diversity}
 =
 \frac{2}{m(m-1)}
 \sum_{a<b}
 \frac{
-\|\widehat{x}_a-\widehat{x}_b\|_2^2
+\left\|
+\widehat{x}_a-\widehat{x}_b
+\right\|_2^2
 }{
 3HW
 }.
-$$
+```
 
-Higher values indicate greater output variation under the same conditioning setting. This metric **does not establish semantic prompt-image correspondence**.
+Higher values indicate greater output variation under the same conditioning setting. This measure does **not** independently establish semantic prompt-image correspondence.
 
 ## Macro-averaged class-wise metrics
 
-For metric \(M\) measured separately for the four motif categories,
+For a class-wise metric \(M_k\):
 
-$$
+```math
 M_{\mathrm{macro}}
 =
 \frac{1}{4}
 \sum_{k=1}^{4}M_k.
-$$
+```
 
-The reported macro FID and macro KID are therefore **unweighted averages of class-wise values**, not global FID/KID computed from one pooled real-generated feature set.
+The reported macro FID and macro KID are therefore **unweighted averages of class-wise metrics**, not pooled global FID/KID.
 
 ## Friedman statistical test
 
-The three conditioning strategies are compared over **12 seed-class blocks**.
-
-Reported results:
+The conditioning strategies are compared across **12 seed-class blocks**.
 
 ```text
 FID : χ²(2) = 5.167, p = 0.0755
 KID : χ²(2) = 4.167, p = 0.1245
 ```
 
-Neither comparison reaches the conventional significance threshold \(\alpha=0.05\).
+Neither test reaches the conventional significance threshold \(\alpha=0.05\).
 
 ## Evaluations not claimed as completed
 
-The implementation also contains routines or artifacts related to:
+The implementation also contains routines or files related to nearest-neighbor screening, LPIPS diversity, and domain-expert evaluation. However:
 
-- nearest-neighbor screening;
-- LPIPS diversity; and
-- domain-expert evaluation.
-
-However:
-
-- pixel-space nearest-neighbor output is used only as a preliminary memorization diagnostic;
-- completed LPIPS scores are not reported in the manuscript;
+- nearest-neighbor screening is used only as a preliminary memorization diagnostic;
+- completed LPIPS results are not reported;
 - completed domain-expert scores are not available.
 
-Accordingly, this repository **does not claim completed expert validation, cultural validation, or direct semantic-alignment evaluation**.
+The repository therefore does **not** claim completed expert validation, cultural validation, or direct semantic-alignment evaluation.
 
 ---
 
@@ -736,12 +692,12 @@ Accordingly, this repository **does not claim completed expert validation, cultu
 ## Generated Endek-like samples
 
 <p align="center">
-  <img src="figures/Figure%203%20New.png" width="1000" alt="Multi-seed generated Endek-like samples">
+  <img src="https://raw.githubusercontent.com/wiwik-instiki/EndekGAN-T2I/main/figures/Figure%203%20New.png" width="1050" alt="Multi-seed generated Endek-like samples">
 </p>
 
-<p align="center"><b>Figure 3.</b> Multi-seed comparison of generated Endek-like samples across the `cat`, `hash_text`, and `transformer_text` conditioning strategies.</p>
+<p align="center"><b>Figure 3.</b> Multi-seed comparison of generated Endek-like samples across the <code>cat</code>, <code>hash_text</code>, and <code>transformer_text</code> conditioning strategies.</p>
 
-Across the nine runs, the model generated colour-rich and textured outputs with visible variation across latent samples and experimental seeds. However, clearly bounded ornaments, stable geometric structure, regular repetitions, and woven-like microtexture were not consistently formed.
+Across the nine runs, the model generated colour-rich and textured outputs with visible variation across latent samples and experimental seeds. However, clearly bounded ornaments, stable geometric structures, regular repetitions, and woven-like microtexture were not consistently formed.
 
 ## Descriptive visual statistics
 
@@ -761,17 +717,14 @@ The current evaluation summarizes **144 generated samples**:
 | `hash_text` | **6.2361 ± 0.3273** | **647.02 ± 345.35** | **39.69 ± 15.05** | 0.0381 ± 0.0339 |
 | `transformer_text` | 6.2016 ± 0.5011 | 639.84 ± 339.45 | 39.24 ± 16.38 | **0.0744 ± 0.0414** |
 
-`transformer_text` achieved approximately:
+`transformer_text` achieved approximately **63.2% higher intra-prompt diversity than `cat`** and **95.3% higher than `hash_text`**.
 
-- **63.2% higher intra-prompt diversity than `cat`**;
-- **95.3% higher intra-prompt diversity than `hash_text`**.
-
-These are descriptive visual differences and do not independently prove semantic prompt-image alignment.
+These differences indicate greater visual variation but do not independently prove semantic prompt-image alignment.
 
 ## Class-wise FID
 
 <p align="center">
-  <img src="figures/Figure%204_Classwise_FID_EndekGAN.png" width="900" alt="Class-wise FID">
+  <img src="https://raw.githubusercontent.com/wiwik-instiki/EndekGAN-T2I/main/figures/Figure%204_Classwise_FID_EndekGAN.png" width="950" alt="Class-wise FID">
 </p>
 
 <p align="center"><b>Figure 4.</b> Class-wise FID across seeds 42, 123, and 2025. Lower values indicate smaller feature-distribution distance.</p>
@@ -788,7 +741,7 @@ No conditioning strategy achieved the lowest FID across all motif categories.
 ## Class-wise KID
 
 <p align="center">
-  <img src="figures/Figure5_Classwise_KID_EndekGAN(1).png" width="900" alt="Class-wise KID">
+  <img src="https://raw.githubusercontent.com/wiwik-instiki/EndekGAN-T2I/main/figures/Figure5_Classwise_KID_EndekGAN%281%29.png" width="950" alt="Class-wise KID">
 </p>
 
 <p align="center"><b>Figure 5.</b> Class-wise KID across seeds 42, 123, and 2025. Lower values indicate smaller distributional discrepancy.</p>
@@ -800,12 +753,12 @@ No conditioning strategy achieved the lowest FID across all motif categories.
 | Decorative | 0.252 ± 0.035 | 0.211 ± 0.028 | **0.185 ± 0.004** |
 | Geometric | 0.283 ± 0.070 | 0.385 ± 0.014 | **0.268 ± 0.020** |
 
-The conditioning effect is therefore **category dependent**.
+The conditioning effect is therefore category dependent.
 
 ## Macro-averaged class-wise FID
 
 <p align="center">
-  <img src="figures/Figure6_macro_fid_600dpi(1).png" width="850" alt="Macro-averaged class-wise FID">
+  <img src="https://raw.githubusercontent.com/wiwik-instiki/EndekGAN-T2I/main/figures/Figure6_macro_fid_600dpi%281%29.png" width="900" alt="Macro-averaged class-wise FID">
 </p>
 
 <p align="center"><b>Figure 6.</b> Macro-averaged class-wise FID for the three conditioning strategies.</p>
@@ -813,7 +766,7 @@ The conditioning effect is therefore **category dependent**.
 ## Macro-averaged class-wise KID
 
 <p align="center">
-  <img src="figures/Figure7_macro_kid_600dpi(1).png" width="850" alt="Macro-averaged class-wise KID">
+  <img src="https://raw.githubusercontent.com/wiwik-instiki/EndekGAN-T2I/main/figures/Figure7_macro_kid_600dpi%281%29.png" width="900" alt="Macro-averaged class-wise KID">
 </p>
 
 <p align="center"><b>Figure 7.</b> Macro-averaged class-wise KID for the three conditioning strategies.</p>
@@ -824,23 +777,23 @@ The conditioning effect is therefore **category dependent**.
 | `hash_text` | 377.6354 | **4.6340** | 0.2858 | **0.0095** |
 | `transformer_text` | **376.2412** | 19.7734 | **0.2400** | 0.0186 |
 
-`transformer_text` achieved the lowest mean macro FID and KID, whereas `hash_text` showed the lowest inter-seed variability.
+`transformer_text` achieved the lowest mean macro FID and KID, whereas `hash_text` showed the smallest inter-seed variability.
 
-The Friedman tests did not establish statistically significant superiority among the three conditioning strategies.
+The Friedman tests did not establish statistically significant superiority among the three strategies.
 
 ---
 
 # Training Behaviour
 
 <p align="center">
-  <img src="figures/Figure8_training_curves_600dpi(2).png" width="1000" alt="Training-loss trajectories">
+  <img src="https://raw.githubusercontent.com/wiwik-instiki/EndekGAN-T2I/main/figures/Figure8_training_curves_600dpi%282%29.png" width="1050" alt="Training-loss trajectories">
 </p>
 
 <p align="center"><b>Figure 8.</b> Generator, discriminator, and feature-matching loss trajectories for the nine experimental runs.</p>
 
 All nine runs completed 400 epochs without non-finite values or abrupt numerical termination.
 
-Final-stage losses were summarized over the last 20 epochs:
+Final-stage losses were summarized over the final 20 epochs:
 
 | Variant | Generator loss | Discriminator loss | Feature-matching loss | R1 penalty |
 |---|---:|---:|---:|---:|
@@ -848,20 +801,20 @@ Final-stage losses were summarized over the last 20 epochs:
 | `hash_text` | 2.3582 ± 0.0550 | 0.3665 ± 0.0316 | 0.0864 ± 0.0111 | 0.00162 ± 0.00010 |
 | `transformer_text` | 1.9998 ± 0.0720 | 0.4681 ± 0.0517 | 0.0644 ± 0.0026 | 0.00177 ± 0.00018 |
 
-These loss values describe optimization behaviour and **should not be interpreted as direct rankings of generated-image quality**.
+These values characterize optimization behaviour and should **not** be interpreted as direct rankings of generated-image quality.
 
 ---
 
 # Artifacts and Legacy Filenames
 
-Representative experiment artifacts include:
+Representative artifacts include:
 
 | Artifact | Purpose |
 |---|---|
 | `duplicates_md5_all.csv` | exact-duplicate audit |
 | `clean_images_no_md5_duplicates.csv` | clean-image inventory |
 | `metadata_expert_guided.csv` | structured image-class-prompt metadata |
-| `metadata_expert_guided_used.csv` | metadata snapshot used for a run |
+| `metadata_expert_guided_used.csv` | metadata snapshot used by a run |
 | `train_split.csv` | training split |
 | `val_split.csv` | validation split |
 | `test_split.csv` | test split |
@@ -872,21 +825,20 @@ Representative experiment artifacts include:
 | `human_expert_evaluation_sheet_<MODE>.csv` | empty expert-evaluation instrument |
 | `experiment_summary_<MODE>.json` | run configuration summary |
 
-> **Legacy filename note**  
-> Some files and folders retain historical names containing `expert_guided`, `ExpertKnowledge`, or `ExpertGuided`. These names are preserved to avoid breaking the existing experimental pipeline. They do **not** mean that every prompt or generated sample was individually expert-authored or expert-validated.
+> **Legacy filename note:** Some files and folders retain historical names containing `expert_guided`, `ExpertKnowledge`, or `ExpertGuided`. These names are preserved to avoid breaking the existing experimental pipeline. They do **not** mean that individual prompts or generated samples were expert-authored or expert-validated.
 
 ---
 
 # Scope, Validity, and Limitations
 
-## Claims supported by the current experiments
+## Supported claims
 
-The experiments support the following statements:
+The current experiments support the following statements:
 
 - a four-category Endek image-prompt dataset containing 370 unique images was constructed for controlled experimentation;
 - the dataset contains 369 unique structured prompts;
 - three conditioning representations were compared under a common conditional-GAN configuration;
-- nine seed-specific runs completed the 400-epoch schedule;
+- all nine seed-specific runs completed the 400-epoch schedule;
 - `transformer_text` achieved the highest measured intra-prompt diversity;
 - `transformer_text` achieved the lowest mean macro-averaged class-wise FID and KID;
 - `hash_text` showed the lowest inter-seed variability in the macro metrics;
@@ -909,7 +861,7 @@ This repository does **not** claim that:
 
 ## Main limitations
 
-- 370 unique images only;
+- 370 unique images;
 - 37 total test images;
 - 6-14 real test images per motif category;
 - deterministic prompt generation from controlled vocabularies;
@@ -951,7 +903,7 @@ pip install torchmetrics torch-fidelity
 pip install jupyter ipykernel
 ```
 
-Optional diagnostic dependency:
+Optional:
 
 ```bash
 pip install lpips
@@ -959,7 +911,7 @@ pip install lpips
 
 ## 4. Configure the local dataset path
 
-The original Endek images are not publicly redistributed. Authorized users should set their own dataset path:
+The original Endek images are not publicly redistributed. Authorized users should configure their own local path:
 
 ```python
 from pathlib import Path
@@ -967,7 +919,7 @@ from pathlib import Path
 DATASET_ROOT = Path("/path/to/EndekGAN_Dataset")
 ```
 
-## 5. Choose conditioning mode and seed
+## 5. Select conditioning mode and seed
 
 ```python
 EXPERIMENT_MODE = "transformer_text"
@@ -992,13 +944,11 @@ Seeds:
 
 ## 6. Run the notebook
 
-The current implementation may retain the legacy notebook filename:
+The current implementation may retain the legacy filename:
 
 ```bash
 jupyter notebook EndekGAN_ExpertKnowledge_TextGuided_IEEE_Experiment.ipynb
 ```
-
-Then restart the kernel and run all cells.
 
 Complete end-to-end training requires authorized access to the original Endek image collection.
 
@@ -1006,16 +956,16 @@ Complete end-to-end training requires authorized access to the original Endek im
 
 # Future Work
 
-Future development should directly address limitations observed in the present baseline:
+Future development should directly address the limitations identified by the current experiments:
 
-1. fixed common data partitions for architecture-level comparison;
-2. cleaned and expert-validated prompt annotations;
-3. direct domain-expert evaluation of generated motifs;
-4. longer training and expanded limited-data analysis;
+1. fixed common data partitions for architecture-level comparisons;
+2. cleaned and expert-validated prompts;
+3. direct domain-expert evaluation;
+4. longer training and expanded limited-data experiments;
 5. explicit text-image alignment metrics;
-6. repeat-aware spatial constraints;
+6. repeat-aware structural constraints;
 7. symmetry- and motif-aware objectives;
-8. improved modelling of woven-like microtexture;
+8. improved woven-like microtexture modelling;
 9. linguistically varied or multi-caption prompt construction;
 10. completed perceptual-diversity evaluation;
 11. stronger memorization diagnostics;
@@ -1025,7 +975,7 @@ Future development should directly address limitations observed in the present b
 
 # Citation
 
-Until the manuscript receives its final publication metadata, please cite it as an unpublished manuscript:
+Until final publication metadata are available:
 
 ```bibtex
 @unpublished{Rahayu2026EndekGANT2I,
@@ -1036,7 +986,7 @@ Until the manuscript receives its final publication metadata, please cite it as 
 }
 ```
 
-After publication, replace this entry with the official IEEE Access volume, pages/article number, year, and DOI.
+After publication, replace this entry with the official IEEE Access metadata.
 
 ---
 
