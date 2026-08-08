@@ -1,105 +1,95 @@
 # EndekGAN-T2I
 
-## EndekGAN-T2I: A Design-Knowledge-Conditioned Text-to-Image GAN Baseline for Limited-Data Balinese Endek Motif Generation
+## A Design-Knowledge-Conditioned Text-to-Image GAN Baseline for Limited-Data Balinese Endek Motif Generation
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.x-ee4c2c.svg)](https://pytorch.org/)
-[![Task](https://img.shields.io/badge/Task-Text--to--Image-purple.svg)](#4-konsep-text-to-image-pada-endekgan-t2i)
-[![Status](https://img.shields.io/badge/Status-Research%20Baseline-yellow.svg)](#18-batas-validitas-dan-klaim)
-[![Domain](https://img.shields.io/badge/Domain-Balinese%20Endek-green.svg)](#2-dataset-citra-endek)
+[![Task](https://img.shields.io/badge/Task-Text--to--Image-purple.svg)](#overview)
+[![Status](https://img.shields.io/badge/Status-Research%20Baseline-yellow.svg)](#scope-and-validity)
+[![Domain](https://img.shields.io/badge/Domain-Balinese%20Endek-green.svg)](#dataset)
 
-**EndekGAN-T2I** merupakan baseline *expert-guided text-to-image conditional generative adversarial network* untuk menghasilkan pola visual motif Endek Bali berdasarkan pasangan **citra–kelas–prompt terstruktur**.
+**EndekGAN-T2I** is a **design-knowledge-conditioned text-to-image GAN baseline** for limited-data Balinese Endek motif generation. The framework combines structured Endek design prompts, class embeddings, separate generator- and discriminator-side condition projectors, a conditional generator, and a projection discriminator.
 
-Repository ini mendokumentasikan hasil penelitian tahun kedua. EndekGAN-T2I diposisikan sebagai **Model I**, bukan sebagai model akhir disertasi atau sistem penghasil motif siap tenun. Hasil eksperimen digunakan sebagai dasar empiris untuk mengembangkan **SF-EndekGAN** pada tahap penelitian berikutnya.
+The repository documents the experimental pipeline used to compare three conditioning strategies under a common generative backbone:
 
-> **Urutan utama eksperimen:**  
-> dataset citra → audit dan deduplikasi → metadata image–text → pembagian data → class-balanced sampling → text conditioning → training conditional GAN → evaluasi test → hasil generasi → analisis.
+- `cat`: category-conditioned baseline with deterministic label encoding;
+- `hash_text`: deterministic hash-based lexical conditioning; and
+- `transformer_text`: multilingual transformer-based semantic conditioning.
 
----
+The study is positioned as a **transparent empirical baseline for conditioning analysis**, not as a production-ready Endek design system. The generated outputs should be interpreted as preliminary Endek-like visual patterns rather than weaving-ready motifs.
 
-## Daftar Isi
-
-1. [Alur Penelitian](#1-alur-penelitian)
-2. [Dataset Citra Endek](#2-dataset-citra-endek)
-3. [Konstruksi Dataset Image–Text](#3-konstruksi-dataset-imagetext)
-4. [Konsep Text-to-Image](#4-konsep-text-to-image-pada-endekgan-t2i)
-5. [Pembagian Data](#5-pembagian-data-terstratifikasi)
-6. [Class-Balanced Sampling](#6-class-balanced-sampling)
-7. [Prapemrosesan dan Augmentasi](#7-prapemrosesan-dan-augmentasi)
-8. [Arsitektur EndekGAN-T2I](#8-arsitektur-endekgan-t2i)
-9. [Strategi Conditioning](#9-strategi-conditioning)
-10. [Fungsi Objektif](#10-fungsi-objektif)
-11. [Konfigurasi Eksperimen](#11-konfigurasi-eksperimen)
-12. [Proses Training](#12-proses-training-step-by-step)
-13. [File CSV dan Artefak](#13-file-csv-dan-artefak-eksperimen)
-14. [Grafik Training](#14-grafik-training)
-15. [Evaluasi Validation dan Test](#15-evaluasi-validation-dan-test)
-16. [Hasil Generasi](#16-hasil-generasi)
-17. [Ringkasan Hasil](#17-ringkasan-hasil-kuantitatif)
-18. [Batas Validitas](#18-batas-validitas-dan-klaim)
-19. [Menjalankan Eksperimen](#19-menjalankan-eksperimen)
-20. [Struktur Folder Output](#20-struktur-folder-output)
-21. [Roadmap SF-EndekGAN](#21-roadmap-sf-endekgan)
-22. [Sitasi](#22-sitasi)
-23. [Penulis](#23-penulis)
+> **Main experimental flow**  
+> dataset curation → MD5 deduplication → structured prompt construction → stratified split → inverse-frequency sampling → conditioning representation → conditional GAN training → EMA sampling → visual and distributional evaluation → statistical analysis.
 
 ---
 
-# 1. Alur Penelitian
+## Table of Contents
 
-EndekGAN-T2I mengubah eksperimen generasi citra berbasis kategori menjadi pembelajaran lintas-modal yang menghubungkan:
+1. [Overview](#overview)
+2. [Dataset](#dataset)
+3. [Structured Prompt Construction](#structured-prompt-construction)
+4. [Conditioning Representations](#conditioning-representations)
+5. [Data Split, Preprocessing, and Balanced Sampling](#data-split-preprocessing-and-balanced-sampling)
+6. [EndekGAN-T2I Architecture](#endekgan-t2i-architecture)
+7. [Training Objectives](#training-objectives)
+8. [Experimental Configuration](#experimental-configuration)
+9. [Evaluation Protocol](#evaluation-protocol)
+10. [Experimental Results](#experimental-results)
+11. [Artifacts and Output Files](#artifacts-and-output-files)
+12. [Scope and Validity](#scope-and-validity)
+13. [Running the Experiment](#running-the-experiment)
+14. [Repository Output Structure](#repository-output-structure)
+15. [Future Work](#future-work)
+16. [Citation](#citation)
+17. [Authors](#authors)
 
-- citra motif Endek;
-- label kategori;
-- atribut desain;
-- prompt teks;
-- konteks budaya; dan
-- batasan kelayakan tenun.
+---
+
+# Overview
+
+EndekGAN-T2I investigates whether structured lexical and multilingual semantic conditioning provides additional generative information beyond category-conditioned representation in a limited-data Balinese Endek setting.
+
+The framework connects:
+
+- Endek motif images;
+- motif categories;
+- structured design attributes;
+- Indonesian-language prompts;
+- class embeddings;
+- text representations; and
+- conditional adversarial generation.
 
 ```mermaid
 flowchart LR
-    A[372 citra awal] --> B[Validasi keterbacaan]
-    B --> C[Audit dan deduplikasi MD5]
-    C --> D[370 citra bersih]
-    D --> E[Pengetahuan desain Endek]
-    E --> F[Metadata image-class-prompt]
-    F --> G[Stratified split]
-    G --> H[Class-balanced sampling]
-    H --> I{Conditioning mode}
+    A[372 initial images] --> B[Readability validation]
+    B --> C[MD5 duplicate audit]
+    C --> D[370 unique images]
+    D --> E[Structured design-knowledge prompts]
+    E --> F[Image-class-prompt metadata]
+    F --> G[Stratified train/val/test split]
+    G --> H[Inverse-frequency weighted sampling]
+    H --> I{Conditioning representation}
     I --> I1[cat]
     I --> I2[hash_text]
     I --> I3[transformer_text]
-    I1 --> J[Training EndekGAN-T2I]
+    I1 --> J[EndekGAN-T2I training]
     I2 --> J
     I3 --> J
     J --> K[EMA generator]
-    K --> L[Generated images]
-    L --> M[FID KID Diversity NN Expert sheet]
-    M --> N[Dasar SF-EndekGAN]
+    K --> L[Generated Endek-like samples]
+    L --> M[Visual statistics + FID/KID + training diagnostics]
+    M --> N[Friedman statistical analysis]
 ```
 
-Alur tersebut dapat diringkas sebagai:
-
-```text
-Dataset
-→ audit
-→ deduplikasi
-→ metadata T2I
-→ train/validation/test split
-→ balanced sampling
-→ text encoding
-→ conditional GAN training
-→ generated evaluation
-→ quantitative and visual analysis
-```
+The three conditioning strategies are evaluated with seeds **42, 123, and 2025**, yielding **nine complete experimental runs**.
 
 ---
 
-# 2. Dataset Citra Endek
+# Dataset
 
-## 2.1 Struktur dataset
+## Dataset composition
 
-Dataset dikelompokkan ke dalam empat kategori motif.
+The internal Endek image collection contains four motif categories.
 
 ```text
 EndekGAN_Dataset/
@@ -109,1438 +99,193 @@ EndekGAN_Dataset/
 └── geometris/
 ```
 
-| Kategori | Karakter visual |
+The folder names above follow the original local dataset naming. In the manuscript, the categories are reported in English as **flora, fauna, decorative, and geometric**.
+
+| Category | Raw images | Valid images | Final unique images |
+|---|---:|---:|---:|
+| Flora | 148 | 148 | 147 |
+| Fauna | 54 | 54 | 53 |
+| Decorative | 112 | 112 | 112 |
+| Geometric | 58 | 58 | 58 |
+| **Total** | **372** | **372** | **370** |
+
+All 372 files passed image-readability validation. MD5 checking identified two exact duplicate pairs, and one redundant copy from each pair was removed before data partitioning.
+
+The resulting dataset is imbalanced, with flora and decorative motifs represented more frequently than fauna and geometric motifs.
+
+## Data availability
+
+The original Endek images are retained in the internal research collection and are **not redistributed in this public repository because of source-ownership restrictions**.
+
+The repository is intended to expose the experimental logic and derived research artifacts, including:
+
+- metadata;
+- split files;
+- configuration files;
+- generated samples;
+- training logs; and
+- aggregate evaluation results.
+
+Accordingly, the repository should be treated as a **transparent and traceable experimental record**, not as a fully self-contained public image dataset.
+
+---
+
+# Structured Prompt Construction
+
+## Design-knowledge schema
+
+Each image is paired with a structured Indonesian-language prompt generated from a controlled Endek design-knowledge schema.
+
+The prompt representation extends the motif category with the following attributes:
+
+| Attribute | Role |
 |---|---|
-| Flora | Bunga, daun, sulur, dan bentuk organik |
-| Fauna | Bentuk hewan yang telah mengalami stilasi |
-| Dekoratif | Ornamen bebas dengan komposisi relatif kompleks |
-| Geometris | Garis, bidang, simetri, dan struktur repetitif |
+| `label` | Motif category |
+| `motif_source` | Visual or symbolic motif source |
+| `technique` | Stylization, deformation, or distortion |
+| `layout_pattern` | Spatial organization |
+| `composition` | Compositional principle |
+| `color_style` | Colour tendency |
+| `cultural_context` | Balinese cultural context |
+| `weavability_note` | Weaving-related constraint |
 
-## 2.2 Validasi dan deduplikasi
+The manuscript reports the following representative attribute groups:
 
-Dataset awal terdiri atas 372 citra. Seluruh file dapat dibaca. Audit MD5 mendeteksi empat entri file yang termasuk ke dalam dua kelompok duplikasi identik.
-
-Pada setiap kelompok, satu file dipertahankan dan salinan identik dihapus.
-
-| Kategori | Data awal | Data valid | Data bersih | Perubahan |
-|---|---:|---:|---:|---:|
-| Flora | 148 | 148 | 147 | −1 |
-| Fauna | 54 | 54 | 53 | −1 |
-| Dekoratif | 112 | 112 | 112 | 0 |
-| Geometris | 58 | 58 | 58 | 0 |
-| **Total** | **372** | **372** | **370** | **−2** |
-
-Deduplikasi dilakukan sebelum pembagian data untuk mencegah citra identik muncul pada subset training dan test secara bersamaan.
-
-### Visualisasi audit dataset
-
-[![Audit, validasi, deduplikasi, dan distribusi dataset](4.2.1%20Validasi%2C%20Deduplikasi%2C%20dan%20Distribusi%20Kelas.png)](4.2.1%20Validasi%2C%20Deduplikasi%2C%20dan%20Distribusi%20Kelas.png)
-
-> Klik gambar untuk membukanya dalam ukuran penuh.
-
-## 2.3 Heterogenitas visual
-
-Setiap kategori memiliki heterogenitas visual yang berbeda.
-
-Flora memuat bentuk organik, fauna memerlukan pembentukan struktur objek secara global, dekoratif mempunyai organisasi ornamen yang lebih bebas, sedangkan geometris menuntut ketepatan garis, simetri, dan repetisi.
-
-[![Heterogenitas visual antar-kategori](4.2.2%20Heterogenitas%20visual%20antar-kategori.png)](4.2.2%20Heterogenitas%20visual%20antar-kategori.png)
-
-Heterogenitas tersebut menjelaskan mengapa jumlah citra tidak selalu berhubungan linear dengan nilai FID atau KID.
-
----
-
-# 3. Konstruksi Dataset Image–Text
-
-## 3.1 Definisi dataset T2I
-
-**Persamaan (1) — Dataset image–text**
-
-```math
-\mathcal{D}
-=
-\left\{
-\left(
-\mathbf{x}_i,
-y_i,
-t_i
-\right)
-\right\}_{i=1}^{N}
-```
-
-dengan:
-
-- `x_i` sebagai citra Endek ke-`i`;
-- `y_i` sebagai label kelas;
-- `t_i` sebagai prompt;
-- `N = 370`; dan
-- `y_i ∈ {1,2,3,4}`.
-
-Dataset citra biasa hanya mempunyai hubungan:
-
-```text
-image → class
-```
-
-Pada EndekGAN-T2I, struktur tersebut diperluas menjadi:
-
-```text
-image
-→ class
-→ title
-→ full prompt
-→ design attributes
-→ cultural context
-→ weavability constraint
-```
-
-## 3.2 Basis pengetahuan pakar
-
-Prompt dibangun berdasarkan sembilan aspek penilaian desain Endek:
-
-1. ide atau gagasan;
-2. penguasaan teknis;
-3. penguasaan bahan atau ragam hias;
-4. kegunaan;
-5. wujud atau *form*;
-6. gaya atau corak;
-7. kreativitas;
-8. tempat atau konteks penggunaan; dan
-9. selera, agama, serta kepantasan budaya.
-
-Aspek tersebut dioperasionalkan menjadi delapan atribut T2I.
-
-| Atribut | Peran |
+| Attribute group | Representative values |
 |---|---|
-| `label` | Menentukan kategori motif |
-| `motif_source` | Menjelaskan objek atau simbol sumber |
-| `technique` | Menjelaskan stilasi, deformasi, atau distorsi |
-| `layout_pattern` | Menjelaskan organisasi spasial |
-| `composition` | Menjelaskan prinsip komposisi |
-| `color_style` | Memberikan arahan warna |
-| `weavability_note` | Memberikan batasan teknis tenun |
-| `cultural_context` | Menjaga identitas dan kepantasan budaya |
+| Motif class | flora, fauna, decorative, geometric |
+| Motif source | frangipani, butterfly, traditional ornament, geometric structure |
+| Technique | stylization, deformation, distortion |
+| Layout | single pattern, controlled random, grouped repetition, full repetition |
+| Composition | proportion, balance, rhythm, contrast, unity |
+| Colour style | red-gold, green-yellow, blue-black-white |
+| Cultural context | Balinese identity, cultural appropriateness |
+| Weavability | thread-scale readability, motif density, binding distance |
 
-## 3.3 Template prompt
+## Deterministic prompt generation
 
-```text
-Motif Endek [KELAS] berbasis [SUMBER MOTIF].
-
-Desain kain Endek Bali bertema [KELAS] yang terinspirasi dari
-[SUMBER MOTIF].
-
-Motif dibuat menggunakan [DESKRIPSI TEKNIK].
-
-Tata letak menggunakan [POLA], dengan [PRINSIP KOMPOSISI 1],
-[PRINSIP KOMPOSISI 2], dan kesatuan ornamen.
-
-Pewarnaan memakai [GAYA WARNA].
-
-Desain harus [BATASAN WEAVABILITY], tetap mempertahankan tekstur
-tenun ikat tradisional, dan [KONTEKS BUDAYA].
-```
-
-Contoh:
+Attribute values are assigned deterministically using a string derived from the class label, filename, and attribute identifier.
 
 ```text
-Motif Endek Flora berbasis bunga kamboja sebagai simbol kesucian.
-Motif dibuat menggunakan teknik distorsi dan pola acak terkontrol,
-dengan keseimbangan visual, warna coklat, krem, dan emas, tekstur
-tenun ikat tradisional, serta kepantasan motif dalam konteks Bali.
+class label + filename + attribute identifier
+→ MD5 digest
+→ hexadecimal-to-integer conversion
+→ modulo controlled vocabulary size
+→ selected attribute value
 ```
 
-## 3.4 Struktur metadata
-
-Setiap record menyimpan:
-
-```text
-filename
-image_path
-label
-class_idx
-md5
-title
-motif_source
-technique
-layout_pattern
-composition
-color_style
-weavability_note
-cultural_context
-prompt
-```
-
-| Kelompok | Kolom | Fungsi |
-|---|---|---|
-| Identitas | `filename`, `image_path`, `md5` | Pelacakan citra dan audit duplikasi |
-| Kategori | `label`, `class_idx` | Class embedding dan balanced sampling |
-| Teks pendek | `title` | Calon eksperimen short-prompt |
-| Teks panjang | `prompt` | Conditioning utama |
-| Desain | `motif_source`, `technique`, `layout_pattern`, `composition` | Penyusunan prompt |
-| Warna | `color_style` | Arahan palet |
-| Teknik dan budaya | `weavability_note`, `cultural_context` | Batasan tenun dan budaya |
-
-Dataset menghasilkan:
-
-- 370 record citra;
-- 369 prompt unik;
-- satu prompt utama per citra;
-- `title` sebagai teks pendek; dan
-- `prompt` sebagai narasi lengkap.
-
-[![Konstruksi atribut, template prompt, dan representasi teks](4.3.2-4.3.3-4.3.4.png)](4.3.2-4.3.3-4.3.4.png)
-
-## 3.5 Stable prompt construction
-
-Atribut prompt dibentuk secara deterministik:
-
-```text
-label + filename
-→ MD5 key
-→ stable_choice
-→ prompt attributes
-```
-
-Citra yang sama akan memperoleh prompt yang sama selama nama file, label, dan knowledge base tidak berubah.
-
-Keterbatasan metadata saat ini:
-
-- terdapat satu prompt identik pada dua citra;
-- beberapa atribut komposisi dapat berulang;
-- beberapa prompt memiliki frasa berulang; dan
-- belum tersedia multi-caption untuk satu citra.
-
----
-
-# 4. Konsep Text-to-Image pada EndekGAN-T2I
-
-EndekGAN-T2I menerima tiga sinyal:
-
-1. prompt `t`;
-2. label kelas `y`; dan
-3. noise laten `z`.
-
-## 4.1 Text embedding
-
-**Persamaan (2) — Text embedding**
+For attribute group \(k\),
 
 ```math
-\mathbf{e}_t
+a_{i,k}
 =
-E_{\mathrm{text}}(t),
-\qquad
-\mathbf{e}_t
-\in
-\mathbb{R}^{384}
-```
-
-## 4.2 Class embedding
-
-**Persamaan (3) — Class embedding**
-
-```math
-\mathbf{e}_y
-=
-E_{\mathrm{class}}(y),
-\qquad
-\mathbf{e}_y
-\in
-\mathbb{R}^{64}
-```
-
-## 4.3 Condition projector
-
-**Persamaan (4) — Condition vector**
-
-```math
-\mathbf{c}
-=
-P_{\phi}
+V_k
+\left[
+\operatorname{Int}_{16}
 \left(
-\mathbf{e}_t
-\mathbin{\Vert}
-\mathbf{e}_y
-\right),
-\qquad
-\mathbf{c}
-\in
-\mathbb{R}^{256}
-```
-
-Simbol `∥` menunjukkan konkatenasi text embedding dan class embedding.
-
-## 4.4 Conditional generation
-
-**Persamaan (5) — Generated image**
-
-```math
-\widehat{\mathbf{x}}
-=
-G_{\theta}
-\left(
-\mathbf{z},
-\mathbf{c}
-\right),
-\qquad
-\mathbf{z}
-\sim
-\mathcal{N}
-\left(
-\mathbf{0},
-\mathbf{I}_{128}
+\operatorname{MD5}(q_{i,k})
 \right)
+\bmod |V_k|
+\right].
 ```
 
-Bentuk output generator:
+This procedure produces:
 
-```math
-\widehat{\mathbf{x}}
-\in
-[-1,1]^{3\times256\times256}
+- **370 image-prompt pairs**;
+- **369 unique prompt strings**.
+
+The prompts are **deterministic design-knowledge conditions**. They are **not manually written image captions and are not individually expert-validated annotations**.
+
+## Prompt language
+
+The prompts supplied to the text-representation pipeline are generated in **Indonesian**. The manuscript provides an English translation of the template only for readability.
+
+Example English translation:
+
+```text
+A Balinese Endek {class} motif inspired by {motif source}.
+The motif is transformed using {technique} and organized through {layout},
+emphasizing {composition}. The design applies {colour style},
+reflects {cultural context}, and considers {weavability constraint}.
 ```
-
-Prompt mengarahkan distribusi visual, label memperkuat prior kategori, sedangkan noise memungkinkan satu prompt menghasilkan beberapa alternatif citra.
 
 ---
 
-# 5. Pembagian Data Terstratifikasi
+# Conditioning Representations
 
-Dataset dibagi menggunakan rasio 80:10:10 setelah deduplikasi dan sebelum augmentasi.
+All three variants use the same main generator, discriminator, and optimization configuration.
 
-| Kategori | Training | Validation | Test | Total |
-|---|---:|---:|---:|---:|
-| Flora | 118 | 15 | 14 | 147 |
-| Fauna | 42 | 5 | 6 | 53 |
-| Dekoratif | 90 | 11 | 11 | 112 |
-| Geometris | 46 | 6 | 6 | 58 |
-| **Total** | **296** | **37** | **37** | **370** |
+## `cat`: category-conditioned baseline
 
-File pembagian:
-
-| File | Fungsi |
-|---|---|
-| `train_split.csv` | Record untuk optimisasi generator dan discriminator |
-| `val_split.csv` | Record validation dan pemantauan sampel |
-| `test_split.csv` | Record evaluasi FID/KID dan generated evaluation |
-
-Jumlah test hanya 37 citra, yaitu 6–14 citra per kelas. Karena itu, FID/KID per kelas digunakan sebagai indikator diagnostik.
-
----
-
-# 6. Class-Balanced Sampling
-
-Distribusi training asli:
-
-| Kategori | Data training | Proporsi asli |
-|---|---:|---:|
-| Flora | 118 | 39,86% |
-| Fauna | 42 | 14,19% |
-| Dekoratif | 90 | 30,41% |
-| Geometris | 46 | 15,54% |
-
-## 6.1 Jumlah sampel kelas
-
-**Persamaan (6)**
+The prompt content is ignored. A deterministic 384-dimensional sparse category representation is constructed from the class label using MD5 hashing.
 
 ```math
-n_k
+j_y
 =
-\sum_{i=1}^{N}
-\mathbb{I}
+\operatorname{Int}_{16}
 \left(
-y_i=k
+\operatorname{MD5}(y)
 \right)
+\bmod 384.
 ```
 
-## 6.2 Bobot per citra
+Because a trainable 64-dimensional class embedding is also used, this mode is described as a **category-conditioned baseline with deterministic label encoding**.
 
-**Persamaan (7)**
+## `hash_text`: hash-based lexical conditioning
+
+Prompt tokens are deterministically mapped into a 384-dimensional vector.
 
 ```math
-\alpha_i
+j_k
 =
-\frac{1}{n_{y_i}}
-```
-
-## 6.3 Probabilitas citra
-
-**Persamaan (8)**
-
-```math
-p_i
-=
-\frac{\alpha_i}
-{\sum_{j=1}^{N}\alpha_j}
-```
-
-## 6.4 Probabilitas kelas
-
-**Persamaan (9)**
-
-```math
-P(Y=k)
-=
-\sum_{i:y_i=k}p_i
-=
-\frac{1}{K}
-```
-
-Karena terdapat empat kelas:
-
-```math
-P(Y=k)
-=
-0.25
-```
-
-## 6.5 Sampel efektif per epoch
-
-Konfigurasi:
-
-```python
-num_samples = 296
-batch_size = 16
-drop_last = True
-replacement = True
-```
-
-**Persamaan (10)**
-
-```math
-N_{\mathrm{eff}}
-=
-16
-\left\lfloor
-\frac{296}{16}
-\right\rfloor
-=
-288
-```
-
-**Persamaan (11) — Ekspektasi paparan setiap kelas**
-
-```math
-\mathbb{E}[M_k]
-=
-\frac{N_{\mathrm{eff}}}{K}
-=
-\frac{288}{4}
-=
-72
-```
-
-Balanced sampling menyeimbangkan frekuensi paparan, tetapi tidak menambah jumlah citra unik pada kelas minoritas.
-
----
-
-# 7. Prapemrosesan dan Augmentasi
-
-## 7.1 Training transform
-
-```text
-Input image
-→ RGB conversion
-→ resize 256 × 256
-→ horizontal flip, p = 0.50
-→ ColorJitter, p = 0.30
-→ tensor conversion
-→ normalization [-1,1]
-```
-
-Parameter `ColorJitter`:
-
-| Parameter | Nilai |
-|---|---:|
-| Brightness | 0,08 |
-| Contrast | 0,08 |
-| Saturation | 0,08 |
-| Hue | 0,02 |
-
-## 7.2 Validation dan test transform
-
-```text
-Input image
-→ RGB conversion
-→ resize 256 × 256
-→ tensor conversion
-→ normalization [-1,1]
-```
-
-Validation dan test tidak menggunakan transformasi acak.
-
-Normalisasi:
-
-```python
-mean = [0.5, 0.5, 0.5]
-std = [0.5, 0.5, 0.5]
-```
-
-Normalisasi tersebut menyesuaikan citra real dengan domain keluaran `tanh` generator.
-
----
-
-# 8. Arsitektur EndekGAN-T2I
-
-[![Arsitektur dan fungsi objektif EndekGAN-T2I](Gambar_4_5_Arsitektur_EndekGAN_T2I.png)](Gambar_4_5_Arsitektur_EndekGAN_T2I.png)
-
-## 8.1 Dimensi representasi
-
-| Komponen | Dimensi |
-|---|---:|
-| Noise laten | 128 |
-| Text embedding | 384 |
-| Class embedding | 64 |
-| Konkatenasi text–class | 448 |
-| Condition vector | 256 |
-| Output image | 3 × 256 × 256 |
-
-## 8.2 Generator
-
-Generator menerima noise dan condition vector. Keduanya diproyeksikan menjadi fitur awal `4 × 4`, kemudian diperbesar menggunakan *transposed-convolution upsampling* hingga resolusi 256 × 256.
-
-Output akhir menggunakan:
-
-```python
-nn.Tanh()
-```
-
-Jumlah parameter generator:
-
-```text
-6.171.299
-```
-
-## 8.3 Projection discriminator
-
-Discriminator mengekstraksi fitur citra:
-
-```math
-\mathbf{h}
-=
-h_{\omega}(\mathbf{x})
-```
-
-**Persamaan (12) — Projection discriminator**
-
-```math
-D_{\omega}
+\operatorname{Int}_{16}
 \left(
-\mathbf{x},
-\mathbf{c}
+\operatorname{MD5}(w_k)
 \right)
-=
-a_{\omega}(\mathbf{h})
-+
-\left\langle
-\mathbf{h},
-V_{\omega}\mathbf{c}
-\right\rangle
+\bmod 384.
 ```
 
-Komponen pertama menilai realisme citra. Komponen proyeksi menilai kompatibilitas antara fitur citra dan kondisi teks–kelas.
+Token counts are accumulated and L2-normalized.
 
-Jumlah parameter discriminator:
+This representation preserves lexical occurrence but does not explicitly preserve word order or semantic relations.
 
-```text
-7.295.713
-```
+## `transformer_text`: multilingual transformer conditioning
 
----
-
-# 9. Strategi Conditioning
-
-| Mode | Implementasi | Informasi yang dipertahankan | Peran |
-|---|---|---|---|
-| `cat` | `MD5(label) → sparse 384-D vector` | Kategori; prompt diabaikan | Category-conditioned baseline |
-| `hash_text` | Token → hash bin → L2 normalization | Bag-of-words | Lightweight text-guided baseline |
-| `transformer_text` | Multilingual MiniLM → mean pooling → L2 normalization | Makna kalimat global | Baseline T2I utama |
-
-## 9.1 `cat`
-
-Mode `cat` menguji kemampuan model dalam mempelajari prior visual kategori tanpa menggunakan isi prompt. Mode ini bukan T2I penuh.
-
-## 9.2 `hash_text`
-
-Mode `hash_text` menggunakan token prompt, tetapi tidak mempertahankan urutan kata, hubungan sinonim, dan konteks kalimat secara menyeluruh.
-
-## 9.3 `transformer_text`
-
-Text encoder:
+The semantic variant uses the frozen multilingual sentence encoder:
 
 ```text
 sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
 ```
 
-Konfigurasi:
+Configuration:
 
 ```text
-Maximum token : 160
-Pooling       : mean pooling
-Normalization : L2
-Embedding     : 384-D
-Fine-tuning   : tidak dilakukan
+Embedding dimension : 384
+Maximum length      : 160 tokens
+Pooling             : masked mean pooling
+Normalization       : L2
+Fine-tuning         : disabled
 ```
+
+The embeddings are precomputed before adversarial training.
 
 ---
 
-# 10. Fungsi Objektif
+# Data Split, Preprocessing, and Balanced Sampling
 
-> Nomor persamaan ditulis di luar blok formula. Jangan menambahkan `\tag{...}` di dalam blok `math`.
+## Stratified split
 
-## 10.1 Hinge loss discriminator
+After deduplication, each experimental seed performs a stratified 80:10:10 split.
 
-**Persamaan (13)**
-
-```math
-\begin{aligned}
-\mathcal{L}_{D}^{\mathrm{hinge}}
-={}&
-\mathbb{E}_{(\mathbf{x},\mathbf{c})\sim p_{\mathrm{data}}}
-\left[
-\max
-\left(
-0,
-1-D_{\omega}(\mathbf{x},\mathbf{c})
-\right)
-\right]
-\\
-&+
-\mathbb{E}_{\mathbf{z}\sim p(\mathbf{z}),\,\mathbf{c}}
-\left[
-\max
-\left(
-0,
-1+D_{\omega}(\widehat{\mathbf{x}},\mathbf{c})
-\right)
-\right]
-\end{aligned}
-```
-
-## 10.2 Generator adversarial loss dan feature matching
-
-**Persamaan (14)**
-
-```math
-\begin{aligned}
-\mathcal{L}_{G}
-={}&
--
-\mathbb{E}_{\mathbf{z},\mathbf{c}}
-\left[
-D_{\omega}
-\left(
-\widehat{\mathbf{x}},
-\mathbf{c}
-\right)
-\right]
-\\
-&+
-\lambda_{\mathrm{FM}}
-\left\|
-\mathbb{E}_{\mathbf{x}}
-\left[
-\mathbf{h}(\mathbf{x})
-\right]
--
-\mathbb{E}_{\mathbf{z}}
-\left[
-\mathbf{h}(\widehat{\mathbf{x}})
-\right]
-\right\|_{1}
-\end{aligned}
-```
-
-dengan:
-
-```math
-\lambda_{\mathrm{FM}}
-=
-5
-```
-
-## 10.3 R1 regularization
-
-**Persamaan (15)**
-
-```math
-\mathcal{R}_{1}
-=
-\frac{\gamma}{2}
-\mathbb{E}_{(\mathbf{x},\mathbf{c})\sim p_{\mathrm{data}}}
-\left[
-\left\|
-\nabla_{\mathbf{x}}
-D_{\omega}
-\left(
-\mathbf{x},
-\mathbf{c}
-\right)
-\right\|_{2}^{2}
-\right],
-\qquad
-\gamma
-=
-5
-```
-
-R1 diterapkan setiap 16 langkah menggunakan *lazy regularization*.
-
-## 10.4 Exponential moving average
-
-**Persamaan (16)**
-
-```math
-\boldsymbol{\theta}_{\mathrm{EMA}}^{(s)}
-=
-\beta
-\boldsymbol{\theta}_{\mathrm{EMA}}^{(s-1)}
-+
-(1-\beta)
-\boldsymbol{\theta}_{G}^{(s)},
-\qquad
-\beta
-=
-0.999
-```
-
-EMA generator digunakan untuk:
-
-- sampel periodik;
-- custom-prompt generation;
-- generated evaluation; dan
-- perhitungan metrik.
-
-Loss L1 atau L2 piksel terhadap citra real acak tidak digunakan karena dataset tidak menyediakan pasangan target deterministik satu prompt–satu citra.
-
----
-
-# 11. Konfigurasi Eksperimen
-
-| Komponen | Nilai |
-|---|---|
-| Resolusi | 256 × 256 RGB |
-| Batch size | 16 |
-| Epoch | 400 |
-| Latent dimension | 128 |
-| Text embedding | 384 |
-| Class embedding | 64 |
-| Condition vector | 256 |
-| Base channel | 32 |
-| Parameter generator | 6.171.299 |
-| Parameter discriminator | 7.295.713 |
-| Learning rate generator | 0,0002 |
-| Learning rate discriminator | 0,0001 |
-| Optimizer | Adam |
-| Adam β₁ | 0,0 |
-| Adam β₂ | 0,999 |
-| Feature matching | 5 |
-| R1 gamma | 5 |
-| R1 interval | 16 langkah |
-| EMA decay | 0,999 |
-| Seed | 42, 123, 2025 |
-| Mode | `cat`, `hash_text`, `transformer_text` |
-
-Total eksperimen:
-
-```text
-3 conditioning modes × 3 seeds = 9 runs
-```
-
-Seed juga digunakan pada pembagian dataset. Variasi antar-seed mencerminkan perubahan split, inisialisasi, noise, sampling, dan augmentasi.
-
----
-
-# 12. Proses Training Step-by-Step
-
-## Step 1 — Membaca batch
-
-DataLoader mengambil:
-
-```text
-real image
-label
-class index
-text embedding
-prompt metadata
-```
-
-## Step 2 — Membentuk condition vector
-
-```text
-text embedding 384-D
-+
-class embedding 64-D
-→ concatenation 448-D
-→ condition projector
-→ condition vector 256-D
-```
-
-## Step 3 — Sampling noise
-
-```python
-z = torch.randn(batch_size, 128)
-```
-
-## Step 4 — Menghasilkan fake image
-
-```text
-noise + condition
-→ conditional generator
-→ fake image [B, 3, 256, 256]
-```
-
-## Step 5 — Update discriminator
-
-Discriminator menerima:
-
-```text
-real image + condition
-fake image + condition
-```
-
-Discriminator diperbarui menggunakan hinge loss dan R1 secara berkala.
-
-## Step 6 — Update generator
-
-Generator diperbarui menggunakan:
-
-```text
-adversarial generator loss
-+
-feature-matching loss
-```
-
-## Step 7 — Update EMA
-
-Bobot EMA diperbarui setelah optimizer generator dijalankan.
-
-## Step 8 — Logging
-
-Pada akhir setiap epoch, notebook menyimpan:
-
-```text
-g_loss
-d_loss
-fm_loss
-r1
-time_min
-experiment_mode
-```
-
-ke `training_log.csv`.
-
-## Step 9 — Menyimpan sampel
-
-Sampel periodik dibuat menggunakan fixed prompt, fixed label, fixed noise, dan EMA generator.
-
-## Step 10 — Menyimpan checkpoint
-
-Checkpoint menyimpan:
-
-```text
-epoch
-G state_dict
-D state_dict
-G_ema state_dict
-optimizer_G state_dict
-optimizer_D state_dict
-configuration
-experiment_mode
-text embedding dimension
-class names
-parameter count
-```
-
----
-
-# 13. File CSV dan Artefak Eksperimen
-
-## 13.1 Ringkasan file
-
-| File | Kolom utama | Fungsi |
-|---|---|---|
-| `duplicates_md5_all.csv` | `filename`, `image_path`, `label`, `md5` | Daftar file duplikat MD5 |
-| `clean_images_no_md5_duplicates.csv` | identitas citra, kelas, MD5 | Inventaris citra bersih |
-| `metadata_expert_guided.csv` | citra, kelas, atribut, prompt | Dataset T2I utama |
-| `metadata_expert_guided_used.csv` | metadata per run | Snapshot metadata yang digunakan |
-| `train_split.csv` | seluruh field metadata | Reproduksi data training |
-| `val_split.csv` | seluruh field metadata | Reproduksi data validation |
-| `test_split.csv` | seluruh field metadata | Reproduksi data test |
-| `training_log.csv` | epoch dan loss | Sumber grafik training |
-| `generated_eval_index_<MODE>.csv` | generated path, prompt, label | Indeks generated image |
-| `fid_kid_metrics_<MODE>.csv` | FID, KID, scope, kelas | Evaluasi distribusi |
-| `lpips_diversity_<MODE>.csv` | LPIPS mean dan standard deviation | Diversity opsional |
-| `nearest_neighbor_check_<MODE>.csv` | fake, real terdekat, MSE | Diagnostik memorisasi |
-| `human_expert_evaluation_sheet_<MODE>.csv` | skor pakar | Instrumen evaluasi budaya |
-| `custom_image_visual_stats_summary.csv` | entropy, sharpness, colourfulness, diversity | Statistik custom prompt |
-| `experiment_summary_<MODE>.json` | konfigurasi run | Ringkasan reproduksibilitas |
-
-## 13.2 `training_log.csv`
-
-Kolom:
-
-```text
-epoch
-g_loss
-d_loss
-fm_loss
-r1
-time_min
-experiment_mode
-```
-
-| Kolom | Makna |
-|---|---|
-| `epoch` | Nomor epoch |
-| `g_loss` | Total generator loss |
-| `d_loss` | Hinge loss discriminator |
-| `fm_loss` | Feature-matching loss |
-| `r1` | R1 penalty |
-| `time_min` | Waktu training kumulatif |
-| `experiment_mode` | Mode conditioning |
-
-## 13.3 `generated_eval_index_<MODE>.csv`
-
-Kolom:
-
-```text
-label
-generated_path
-prompt
-source_filename
-experiment_mode
-```
-
-File ini menghubungkan generated image dengan kelas, prompt, file sumber, dan mode conditioning.
-
-## 13.4 `fid_kid_metrics_<MODE>.csv`
-
-Kolom:
-
-```text
-fid
-kid_mean
-kid_std
-scope
-label
-n_real
-n_fake
-experiment_mode
-```
-
-`scope=per_class` digunakan untuk analisis utama.
-
-## 13.5 `nearest_neighbor_check_<MODE>.csv`
-
-Kolom:
-
-```text
-fake_path
-nearest_real_path
-mse_distance
-label
-```
-
-Nilai `mse_distance` yang sangat kecil perlu diperiksa secara visual karena dapat menunjukkan kemiripan berlebihan dengan citra training.
-
-## 13.6 `human_expert_evaluation_sheet_<MODE>.csv`
-
-Kolom:
-
-```text
-score_ide_gagasan_1_5
-score_penguasaan_teknis_1_5
-score_ragam_hias_bahan_1_5
-score_kegunaan_kain_1_5
-score_wujud_form_1_5
-score_gaya_corak_1_5
-score_kreativitas_1_5
-score_konteks_bali_1_5
-score_selera_agama_kepantasan_1_5
-score_semantic_alignment_1_5
-score_repeat_consistency_1_5
-score_woven_texture_1_5
-score_weavability_1_5
-expert_comment
-```
-
-File ini merupakan instrumen kosong. Skor pakar tidak boleh diklaim sebelum benar-benar diisi.
-
-## 13.7 Text embedding cache
-
-```text
-train_<MODE>_embeddings.npy
-train_<MODE>_index.csv
-val_<MODE>_embeddings.npy
-val_<MODE>_index.csv
-test_<MODE>_embeddings.npy
-test_<MODE>_index.csv
-```
-
-Embedding disimpan agar text encoder tidak dijalankan kembali pada setiap epoch.
-
----
-
-# 14. Grafik Training
-
-Notebook membaca `training_log.csv` dan membentuk grafik:
-
-```text
-Generator loss
-Discriminator loss
-Feature-matching loss
-```
-
-## 14.1 Kurva training
-
-[![Kurva training mode cat seed 2025](Gambar_4_6_Kurva_Training_Cat_Seed2025.png)](Gambar_4_6_Kurva_Training_Cat_Seed2025.png)
-
-Kurva GAN tidak harus turun secara monoton. Grafik digunakan untuk mengamati:
-
-- keseimbangan generator dan discriminator;
-- kemungkinan dominasi salah satu jaringan;
-- kestabilan feature-matching loss;
-- lonjakan ekstrem; dan
-- konsistensi antar-seed.
-
-## 14.2 Membuat ulang grafik dari CSV
-
-```python
-import pandas as pd
-import matplotlib.pyplot as plt
-
-log_df = pd.read_csv("training_log.csv")
-
-plt.figure(figsize=(10, 5))
-plt.plot(
-    log_df["epoch"],
-    log_df["g_loss"],
-    label="Generator loss"
-)
-plt.plot(
-    log_df["epoch"],
-    log_df["d_loss"],
-    label="Discriminator loss"
-)
-plt.plot(
-    log_df["epoch"],
-    log_df["fm_loss"],
-    label="Feature-matching loss"
-)
-
-plt.xlabel("Epoch")
-plt.ylabel("Loss")
-plt.title("EndekGAN-T2I Training Curves")
-plt.legend()
-plt.grid(True, alpha=0.3)
-plt.tight_layout()
-plt.savefig(
-    "training_curves.png",
-    dpi=300,
-    bbox_inches="tight"
-)
-plt.show()
-```
-
----
-
-# 15. Evaluasi Validation dan Test
-
-## 15.1 Mengapa tidak ada testing-loss curve?
-
-EndekGAN-T2I bukan model klasifikasi yang mempunyai:
-
-```text
-train accuracy
-validation accuracy
-test accuracy
-```
-
-Pada eksperimen ini:
-
-- training set digunakan untuk backpropagation;
-- validation set digunakan untuk pemantauan sampel;
-- test set digunakan setelah training untuk evaluasi generatif.
-
-Karena itu, **grafik testing** yang benar adalah:
-
-1. FID per kategori;
-2. KID per kategori;
-3. generated samples;
-4. intra-prompt diversity;
-5. nearest-neighbor analysis; dan
-6. evaluasi pakar.
-
-## 15.2 Fréchet Inception Distance
-
-**Persamaan (17) — FID**
-
-```math
-\operatorname{FID}
-=
-\left\|
-\boldsymbol{\mu}_{r}
--
-\boldsymbol{\mu}_{g}
-\right\|_{2}^{2}
-+
-\operatorname{Tr}
-\left(
-\boldsymbol{\Sigma}_{r}
-+
-\boldsymbol{\Sigma}_{g}
--
-2
-\left(
-\boldsymbol{\Sigma}_{r}
-\boldsymbol{\Sigma}_{g}
-\right)^{1/2}
-\right)
-```
-
-Nilai lebih rendah menunjukkan distribusi generated image lebih dekat dengan citra real.
-
-[![FID per kategori](Gambar_4_13_FID_Per_Kategori.png)](Gambar_4_13_FID_Per_Kategori.png)
-
-## 15.3 Kernel Inception Distance
-
-**Persamaan (18) — KID**
-
-```math
-\operatorname{KID}
-=
-\operatorname{MMD}^{2}
-\left(
-\mathcal{F}_{r},
-\mathcal{F}_{g}
-\right)
-```
-
-Nilai lebih rendah menunjukkan kedekatan distribusi yang lebih baik.
-
-[![KID per kategori](Gambar_4_14_KID_Per_Kategori.png)](Gambar_4_14_KID_Per_Kategori.png)
-
-## 15.4 Intra-prompt diversity
-
-**Persamaan (19)**
-
-```math
-\operatorname{Diversity}
-=
-\frac{2}{m(m-1)}
-\sum_{a<b}
-\frac{
-\left\|
-\widehat{\mathbf{x}}_{a}
--
-\widehat{\mathbf{x}}_{b}
-\right\|_{2}^{2}
-}{
-3HW
-}
-```
-
-Nilai lebih besar menunjukkan keluaran yang lebih beragam untuk prompt yang sama.
-
-## 15.5 Nearest-neighbor distance
-
-**Persamaan (20)**
-
-```math
-d
-\left(
-\widehat{\mathbf{x}},
-\mathbf{x}_{j}
-\right)
-=
-\frac{1}{3HW}
-\left\|
-\widehat{\mathbf{x}}
--
-\mathbf{x}_{j}
-\right\|_{2}^{2}
-```
-
-Nearest-neighbor analysis digunakan sebagai diagnostik memorisasi.
-
-## 15.6 Membuat grafik FID dan KID dari CSV
-
-```python
-import pandas as pd
-import matplotlib.pyplot as plt
-
-files = {
-    "cat": "fid_kid_metrics_cat.csv",
-    "hash_text": "fid_kid_metrics_hash_text.csv",
-    "transformer_text":
-        "fid_kid_metrics_transformer_text.csv",
-}
-
-rows = []
-
-for mode, path in files.items():
-    df = pd.read_csv(path)
-    df = df[df["scope"] == "per_class"].copy()
-    df["mode"] = mode
-    rows.append(df)
-
-metrics = pd.concat(rows, ignore_index=True)
-
-fid_table = metrics.pivot(
-    index="label",
-    columns="mode",
-    values="fid"
-)
-
-kid_table = metrics.pivot(
-    index="label",
-    columns="mode",
-    values="kid_mean"
-)
-
-fid_table.plot(
-    kind="bar",
-    figsize=(10, 5)
-)
-
-plt.ylabel("FID")
-plt.xlabel("Kategori")
-plt.title("FID per Kategori")
-plt.xticks(rotation=0)
-plt.tight_layout()
-plt.savefig(
-    "Gambar_4_13_FID_Per_Kategori.png",
-    dpi=300,
-    bbox_inches="tight"
-)
-plt.show()
-
-kid_table.plot(
-    kind="bar",
-    figsize=(10, 5)
-)
-
-plt.ylabel("KID")
-plt.xlabel("Kategori")
-plt.title("KID per Kategori")
-plt.xticks(rotation=0)
-plt.tight_layout()
-plt.savefig(
-    "Gambar_4_14_KID_Per_Kategori.png",
-    dpi=300,
-    bbox_inches="tight"
-)
-plt.show()
-```
-
----
-
-# 16. Hasil Generasi
-
-## 16.1 Mode `cat`
-
-[![Hasil cat pada seed 42, 123, dan 2025](Gambar_4_7_Hasil_Cat_Seed42_123_2025.png)](Gambar_4_7_Hasil_Cat_Seed42_123_2025.png)
-
-Mode `cat` mempelajari warna dan tekstur berdasarkan kategori. Isi prompt tidak memengaruhi generated image.
-
-## 16.2 Mode `hash_text`
-
-[![Hasil hash_text pada seed 42, 123, dan 2025](Gambar_4_8_Hasil_HashText_Seed42_123_2025.png)](Gambar_4_8_Hasil_HashText_Seed42_123_2025.png)
-
-Mode `hash_text` menggunakan token prompt, tetapi belum mempertahankan hubungan semantik antaratribut.
-
-## 16.3 Mode `transformer_text`
-
-[![Hasil transformer_text pada seed 42, 123, dan 2025](Gambar_4_9_Hasil_TransformerText_Seed42_123_2025.png)](Gambar_4_9_Hasil_TransformerText_Seed42_123_2025.png)
-
-Mode `transformer_text` memberikan representasi teks paling informatif dan menghasilkan variasi visual paling tinggi.
-
-## 16.4 Perbandingan seluruh mode
-
-[![Perbandingan cat, hash_text, dan transformer_text](Gambar_4_10_Perbandingan_Cat_HashText_TransformerText_3Seed.png)](Gambar_4_10_Perbandingan_Cat_HashText_TransformerText_3Seed.png)
-
-## 16.5 Contact sheet seluruh hasil
-
-[![Contact sheet seluruh mode](endekgan_contact_sheet_all_modes.png)](endekgan_contact_sheet_all_modes.png)
-
-Secara visual, seluruh mode lebih kuat mempelajari warna dan tekstur global dibandingkan:
-
-- batas ornamen;
-- bentuk objek;
-- simetri;
-- konsistensi repetisi;
-- hierarki ornamen; dan
-- tekstur tenun mikro.
-
----
-
-# 17. Ringkasan Hasil Kuantitatif
-
-## 17.1 Loss 20 epoch terakhir
-
-| Mode | G loss | D loss | FM loss |
-|---|---:|---:|---:|
-| `cat` | 2,1530 ± 0,2143 | 0,3962 ± 0,0965 | 0,0607 ± 0,0016 |
-| `hash_text` | 2,3582 ± 0,0550 | 0,3665 ± 0,0316 | 0,0864 ± 0,0111 |
-| `transformer_text` | **1,9998 ± 0,0720** | 0,4681 ± 0,0517 | 0,0644 ± 0,0026 |
-
-## 17.2 FID per kategori
-
-| Kategori | n real | `cat` | `hash_text` | `transformer_text` |
+| Category | Training | Validation | Test | Total |
 |---|---:|---:|---:|---:|
-| Flora | 14 | 367,90 ± 20,95 | **302,87 ± 19,26** | 318,59 ± 18,58 |
-| Fauna | 6 | 482,93 ± 90,09 | **438,43 ± 51,55** | 442,17 ± 52,00 |
-| Dekoratif | 11 | 336,16 ± 18,74 | 312,99 ± 19,45 | **306,37 ± 10,97** |
-| Geometris | 6 | **428,01 ± 61,11** | 456,25 ± 51,79 | 437,84 ± 48,93 |
-| **Rata-rata kelas** | — | 403,75 | 377,64 | **376,24** |
+| Flora | 118 | 15 | 14 | 147 |
+| Fauna | 42 | 5 | 6 | 53 |
+| Decorative | 90 | 11 | 11 | 112 |
+| Geometric | 46 | 6 | 6 | 58 |
+| **Total** | **296** | **37** | **37** | **370** |
 
-Tidak terdapat satu mode yang unggul pada seluruh kategori.
-
-## 17.3 KID per kategori
-
-| Kategori | n real | `cat` | `hash_text` | `transformer_text` |
-|---|---:|---:|---:|---:|
-| Flora | 14 | 0,2624 ± 0,0601 | **0,1773 ± 0,0291** | 0,1784 ± 0,0146 |
-| Fauna | 6 | 0,3863 ± 0,1669 | 0,3704 ± 0,0982 | **0,3288 ± 0,0699** |
-| Dekoratif | 11 | 0,2521 ± 0,0348 | 0,2107 ± 0,0280 | **0,1850 ± 0,0042** |
-| Geometris | 6 | 0,2829 ± 0,0699 | 0,3850 ± 0,0136 | **0,2679 ± 0,0198** |
-| **Rata-rata kelas** | — | 0,2959 | 0,2858 | **0,2400** |
-
-## 17.4 Statistik custom prompt
-
-Evaluasi terbaru menggunakan:
-
-```text
-3 modes × 3 seeds × 4 categories × 4 images
-= 144 generated images
-```
-
-| Mode | Entropy | Sharpness | Colourfulness | Intra-prompt diversity |
-|---|---:|---:|---:|---:|
-| `cat` | 6,0975 ± 0,2700 | 618,21 ± 509,13 | 39,10 ± 16,08 | 0,0456 ± 0,0338 |
-| `hash_text` | **6,2361 ± 0,3273** | **647,02 ± 345,35** | **39,69 ± 15,05** | 0,0381 ± 0,0339 |
-| `transformer_text` | 6,2016 ± 0,5011 | 639,84 ± 339,45 | 39,24 ± 16,38 | **0,0744 ± 0,0414** |
-
-`transformer_text` menghasilkan intra-prompt diversity tertinggi.
-
-## 17.5 Interpretasi utama
-
-Hasil menunjukkan transisi berikut:
-
-```text
-category-to-image
-→ lightweight text conditioning
-→ semantic global text conditioning
-```
-
-Temuan utama:
-
-1. `cat` memberikan kontrol kategori dasar.
-2. `hash_text` membuktikan token prompt dapat memengaruhi generasi.
-3. `transformer_text` memberikan representasi teks paling informatif.
-4. `transformer_text` mempunyai generator loss paling konsisten.
-5. `transformer_text` memperoleh rata-rata KID terendah.
-6. `transformer_text` menghasilkan intra-prompt diversity tertinggi.
-7. Tidak ada satu mode yang unggul pada seluruh FID kategori.
-8. Global sentence conditioning belum cukup untuk mengontrol struktur spasial motif secara terperinci.
-
----
-
-# 18. Batas Validitas dan Klaim
-
-## 18.1 Klaim yang didukung
-
-- dataset image–text berhasil dibentuk;
-- tiga strategi conditioning berhasil dibandingkan;
-- prompt memengaruhi generasi pada `hash_text` dan `transformer_text`;
-- `transformer_text` merupakan baseline semantik paling menjanjikan;
-- pipeline dapat dilacak dan direplikasi.
-
-## 18.2 Klaim yang tidak dibuat
-
-- model memahami seluruh makna budaya secara penuh;
-- generated image telah siap ditenun;
-- Transformer unggul mutlak pada seluruh kelas;
-- FID/KID membuktikan kepantasan budaya;
-- skor pakar telah tersedia;
-- model mempunyai token–region alignment;
-- model mempunyai semantic fusion multi-skala.
-
-## 18.3 Keterbatasan
-
-- dataset hanya terdiri atas 370 citra bersih;
-- data test hanya 37 citra;
-- jumlah test per kelas hanya 6–14;
-- prompt dibentuk menggunakan template;
-- satu gambar hanya mempunyai satu prompt utama;
-- beberapa prompt mempunyai frasa berulang;
-- Transformer dibekukan;
-- balanced sampling tidak menambah citra unik;
-- global conditioning belum mengendalikan layout;
-- repetisi dan tekstur tenun mikro belum konsisten.
-
----
-
-# 19. Menjalankan Eksperimen
-
-## 19.1 Clone repository
-
-```bash
-git clone https://github.com/wiwik-instiki/EndekGAN-T2I.git
-cd EndekGAN-T2I
-```
-
-## 19.2 Membuat environment
-
-```bash
-conda create -n endekgan_t2i python=3.10 -y
-conda activate endekgan_t2i
-```
-
-## 19.3 Instalasi package
-
-```bash
-pip install torch torchvision torchaudio
-pip install pandas numpy matplotlib pillow tqdm scikit-learn scipy
-pip install transformers accelerate
-pip install torchmetrics torch-fidelity
-pip install jupyter ipykernel
-```
-
-Opsional:
-
-```bash
-pip install lpips
-```
-
-## 19.4 Mengatur path dataset
-
-```python
-from pathlib import Path
-
-DATASET_ROOT = Path(
-    r"D:\DISERTASI_S3\WIWIK\DATASET_L2\EndekGAN\EndekGAN_Dataset"
-)
-```
-
-Ganti dengan lokasi dataset pada komputer yang digunakan.
-
-## 19.5 Memilih mode dan seed
-
-```python
-EXPERIMENT_MODE = "transformer_text"
-SEED = 42
-```
-
-Pilihan mode:
-
-```text
-cat
-hash_text
-transformer_text
-```
-
-Seed eksperimen:
+Seeds:
 
 ```text
 42
@@ -1548,56 +293,579 @@ Seed eksperimen:
 2025
 ```
 
-## 19.6 Menjalankan notebook
+Each seed controls:
+
+- stratified data partitioning;
+- parameter initialization;
+- stochastic augmentation;
+- weighted sampling; and
+- latent-noise generation.
+
+Therefore, the reported runs are **complete seed-specific experimental repetitions**, not repeated model initialization under one fixed split.
+
+## Preprocessing
+
+All images are:
+
+```text
+RGB conversion
+→ direct resize to 256 × 256
+→ tensor conversion
+→ normalization to [-1, 1]
+```
+
+Training augmentation:
+
+```text
+Horizontal flip : p = 0.50
+ColorJitter     : p = 0.30
+Brightness      : 0.08
+Contrast        : 0.08
+Saturation      : 0.08
+Hue             : 0.02
+```
+
+Validation and test transformations are deterministic.
+
+## Inverse-frequency weighted sampling
+
+For training sample \(i\),
+
+```math
+\alpha_i = \frac{1}{n_{y_i}}.
+```
+
+Sampling is performed with replacement using:
+
+```text
+num_samples = 296
+batch_size  = 16
+drop_last   = True
+replacement = True
+```
+
+This produces:
+
+```text
+18 optimization batches per epoch
+288 sampled observations per epoch
+expected exposure ≈ 72 observations per class
+```
+
+Weighted sampling balances exposure frequency; it does **not** create new unique images for minority classes.
+
+---
+
+# EndekGAN-T2I Architecture
+
+## Representation dimensions
+
+| Component | Dimension |
+|---|---:|
+| Latent noise \(z\) | 128 |
+| Text/category representation \(e_t\) | 384 |
+| Class embedding \(e_y\) | 64 |
+| Concatenated representation | 448 |
+| Generator condition \(c_G\) | 256 |
+| Discriminator condition \(c_D\) | 256 |
+| Output image | 3 × 256 × 256 |
+
+## Separate condition projectors
+
+EndekGAN-T2I uses **separate generator- and discriminator-side condition projectors**:
+
+```math
+c_G=P_G([e_t;e_y]),
+\qquad
+c_D=P_D([e_t;e_y]).
+```
+
+This distinction is important: the implementation does **not** use a single shared condition projector.
+
+## Conditional generator
+
+```math
+\widehat{x}
+=
+G(z,c_G),
+\qquad
+z\sim\mathcal{N}(0,I_{128}).
+```
+
+The concatenated latent-condition representation is projected into a 4×4 feature tensor and progressively upsampled to 256×256 using transposed-convolution blocks.
+
+The final RGB output uses `tanh`.
+
+Generator parameter count:
+
+```text
+6,171,299
+```
+
+## Projection discriminator
+
+The discriminator uses spectrally normalized convolutional blocks and global sum pooling. Its score combines unconditional realism with conditional compatibility:
+
+```math
+D(x,t,y)
+=
+u^\top h(x)
++
+\langle h(x),Vc_D\rangle.
+```
+
+Discriminator parameter count:
+
+```text
+7,295,713
+```
+
+---
+
+# Training Objectives
+
+## Discriminator hinge loss
+
+```math
+\mathcal{L}^{\mathrm{hinge}}_D
+=
+\mathbb{E}_{x,c}
+\left[
+\max(0,1-D(x,c))
+\right]
++
+\mathbb{E}_{z,c}
+\left[
+\max(0,1+D(\widehat{x},c))
+\right].
+```
+
+## Generator adversarial loss
+
+```math
+\mathcal{L}^{\mathrm{adv}}_G
+=
+-\mathbb{E}_{z,c}
+\left[
+D(\widehat{x},c)
+\right].
+```
+
+## Feature matching
+
+```math
+\mathcal{L}_{FM}
+=
+\left\|
+\frac{1}{B}\sum_{i=1}^{B}h(x_i)
+-
+\frac{1}{B}\sum_{i=1}^{B}h(\widehat{x}_i)
+\right\|_1.
+```
+
+The generator objective is
+
+```math
+\mathcal{L}_G
+=
+\mathcal{L}^{\mathrm{adv}}_G
++
+5\mathcal{L}_{FM}.
+```
+
+## Lazy R1 regularization
+
+```math
+R_1
+=
+\frac{\gamma}{2}
+\mathbb{E}
+\left[
+\|\nabla_xD(x,c)\|_2^2
+\right],
+\qquad
+\gamma=5.
+```
+
+R1 is applied every 16 discriminator updates.
+
+## Exponential moving average
+
+```math
+\theta^{(k)}_{EMA}
+=
+0.999\theta^{(k-1)}_{EMA}
++
+0.001\theta^{(k)}_G.
+```
+
+The EMA generator is used for generated evaluation and sampling.
+
+---
+
+# Experimental Configuration
+
+| Item | Configuration |
+|---|---|
+| Resolution | 256 × 256 RGB |
+| Batch size | 16 |
+| Epochs | 400 |
+| Updates per run | 7,200 |
+| Latent dimension | 128 |
+| Text dimension | 384 |
+| Class-embedding dimension | 64 |
+| Condition dimension | 256 |
+| Generator parameters | 6,171,299 |
+| Discriminator parameters | 7,295,713 |
+| Generator learning rate | \(2\times10^{-4}\) |
+| Discriminator learning rate | \(1\times10^{-4}\) |
+| Optimizer | Adam |
+| Adam \(\beta_1,\beta_2\) | \(0, 0.999\) |
+| Feature-matching weight | 5.0 |
+| R1 coefficient / interval | 5.0 / 16 updates |
+| EMA decay | 0.999 |
+| Seeds | 42, 123, 2025 |
+| Conditioning variants | `cat`, `hash_text`, `transformer_text` |
+
+Total experimental runs:
+
+```text
+3 conditioning strategies × 3 seeds = 9 runs
+```
+
+---
+
+# Evaluation Protocol
+
+## Generated evaluation
+
+The EMA generator produces:
+
+```text
+128 generated images per motif category
+512 generated images per run
+```
+
+The principal quantitative comparison uses **class-wise FID and KID** with 2,048-dimensional Inception features.
+
+Available real test images per class:
+
+| Category | Real test images |
+|---|---:|
+| Flora | 14 |
+| Fauna | 6 |
+| Decorative | 11 |
+| Geometric | 6 |
+
+Because these counts are small, class-wise FID/KID values are interpreted as **exploratory diagnostics**, not definitive large-sample estimates.
+
+## Descriptive visual statistics
+
+The reported descriptive measures are:
+
+- entropy;
+- sharpness;
+- colourfulness; and
+- intra-prompt diversity MSE.
+
+## Macro summaries
+
+Macro FID and macro KID are computed by averaging the four class-wise values within each run.
+
+These values are **macro-averaged class-wise metrics**, not global FID/KID.
+
+## Statistical comparison
+
+Differences among conditioning strategies are assessed using a Friedman test over the 12 seed-class blocks:
+
+```text
+FID : χ²(2) = 5.167, p = 0.0755
+KID : χ²(2) = 4.167, p = 0.1245
+```
+
+Neither comparison reaches the conventional \(\alpha=0.05\) significance level.
+
+## Incomplete / non-principal evaluations
+
+The codebase also contains routines or artifacts for:
+
+- pixel-space nearest-neighbor screening;
+- LPIPS diversity; and
+- domain-expert evaluation sheets.
+
+However:
+
+- nearest-neighbor screening is treated only as a preliminary memorization diagnostic;
+- completed LPIPS scores are not reported in the paper;
+- completed domain-expert scores are not available.
+
+Therefore, the repository and manuscript do **not** claim completed expert validation or semantic/cultural correctness.
+
+---
+
+# Experimental Results
+
+## Descriptive visual statistics
+
+Evaluation across 144 generated samples:
+
+```text
+3 modes × 3 seeds × 4 categories × 4 images = 144 images
+```
+
+| Conditioning strategy | Entropy ↑ | Sharpness ↑ | Colourfulness ↑ | Intra-prompt diversity MSE ↑ |
+|---|---:|---:|---:|---:|
+| `cat` | 6.0975 ± 0.2700 | 618.21 ± 509.13 | 39.10 ± 16.08 | 0.0456 ± 0.0338 |
+| `hash_text` | **6.2361 ± 0.3273** | **647.02 ± 345.35** | **39.69 ± 15.05** | 0.0381 ± 0.0339 |
+| `transformer_text` | 6.2016 ± 0.5011 | 639.84 ± 339.45 | 39.24 ± 16.38 | **0.0744 ± 0.0414** |
+
+`transformer_text` achieved approximately:
+
+- **63.2% higher intra-prompt diversity than `cat`**; and
+- **95.3% higher intra-prompt diversity than `hash_text`**.
+
+This indicates greater visual variation under the same conditioning setting, but **does not independently establish semantic prompt-image alignment**.
+
+## Class-wise FID
+
+Lower is better.
+
+| Category | `cat` | `hash_text` | `transformer_text` |
+|---|---:|---:|---:|
+| Flora | 367.90 ± 20.95 | **302.87 ± 19.26** | 318.59 ± 18.58 |
+| Fauna | 482.93 ± 90.09 | **438.43 ± 51.55** | 442.17 ± 52.00 |
+| Decorative | 336.16 ± 18.74 | 312.99 ± 19.45 | **306.37 ± 10.97** |
+| Geometric | **428.01 ± 61.11** | 456.25 ± 51.79 | 437.84 ± 48.93 |
+
+No conditioning strategy achieved the lowest FID in every motif category.
+
+## Class-wise KID
+
+Lower is better.
+
+| Category | `cat` | `hash_text` | `transformer_text` |
+|---|---:|---:|---:|
+| Flora | 0.262 ± 0.060 | **0.177 ± 0.029** | 0.178 ± 0.015 |
+| Fauna | 0.386 ± 0.167 | 0.370 ± 0.098 | **0.329 ± 0.070** |
+| Decorative | 0.252 ± 0.035 | 0.211 ± 0.028 | **0.185 ± 0.004** |
+| Geometric | 0.283 ± 0.070 | 0.385 ± 0.014 | **0.268 ± 0.020** |
+
+## Macro-averaged class-wise results
+
+| Variant | Macro FID ↓ | Inter-seed SD | Macro KID ↓ | Inter-seed SD |
+|---|---:|---:|---:|---:|
+| `cat` | 403.7510 | 35.3013 | 0.2959 | 0.0659 |
+| `hash_text` | 377.6354 | **4.6340** | 0.2858 | **0.0095** |
+| `transformer_text` | **376.2412** | 19.7734 | **0.2400** | 0.0186 |
+
+`transformer_text` produced the lowest mean macro FID and KID, while `hash_text` produced the smallest inter-seed variability.
+
+These differences are **descriptive**, because the Friedman tests did not establish statistically significant superiority.
+
+## Final 20-epoch training losses
+
+| Variant | Generator loss | Discriminator loss | Feature-matching loss | R1 penalty |
+|---|---:|---:|---:|---:|
+| `cat` | 2.1530 ± 0.2143 | 0.3962 ± 0.0965 | 0.0607 ± 0.0016 | 0.00182 ± 0.00019 |
+| `hash_text` | 2.3582 ± 0.0550 | 0.3665 ± 0.0316 | 0.0864 ± 0.0111 | 0.00162 ± 0.00010 |
+| `transformer_text` | 1.9998 ± 0.0720 | 0.4681 ± 0.0517 | 0.0644 ± 0.0026 | 0.00177 ± 0.00018 |
+
+All nine runs completed 400 epochs without non-finite values or abrupt numerical termination.
+
+Training loss should not be interpreted as a direct ranking of generated-image quality.
+
+## Qualitative findings
+
+Across the three conditioning strategies, the model learned:
+
+- broad colour distributions;
+- local texture;
+- preliminary textile-like appearance.
+
+The generated outputs remained limited in:
+
+- clearly bounded ornament formation;
+- class-specific structure;
+- stable geometric organization;
+- repeat consistency; and
+- woven-like microtexture.
+
+The outputs should therefore be interpreted as **preliminary Endek-like visual patterns**, not final weaving-ready Endek designs.
+
+---
+
+# Artifacts and Output Files
+
+Representative experiment artifacts include:
+
+| File | Purpose |
+|---|---|
+| `duplicates_md5_all.csv` | Duplicate audit |
+| `clean_images_no_md5_duplicates.csv` | Clean-image inventory |
+| `metadata_expert_guided.csv` | Structured metadata and prompt records |
+| `metadata_expert_guided_used.csv` | Metadata snapshot used by a run |
+| `train_split.csv` | Training split |
+| `val_split.csv` | Validation split |
+| `test_split.csv` | Test split |
+| `training_log.csv` | Epoch-level loss history |
+| `generated_eval_index_<MODE>.csv` | Generated evaluation index |
+| `fid_kid_metrics_<MODE>.csv` | FID/KID output |
+| `nearest_neighbor_check_<MODE>.csv` | Preliminary pixel-space memorization diagnostic |
+| `human_expert_evaluation_sheet_<MODE>.csv` | Empty expert-evaluation instrument |
+| `experiment_summary_<MODE>.json` | Run configuration summary |
+
+> **Legacy filename note:**  
+> Some implementation artifacts retain names such as `metadata_expert_guided.csv`, `EndekGAN_ExpertKnowledge_TextGuided_IEEE_Experiment.ipynb`, or output folders containing `ExpertGuided`. These are legacy implementation names preserved to avoid breaking the existing experimental pipeline. They **do not imply that each prompt or generated sample was individually expert-authored or expert-validated**.
+
+---
+
+# Scope and Validity
+
+## Supported claims
+
+The current experiments support the following statements:
+
+- a 370-image, four-category Endek image-prompt dataset was constructed for controlled experimentation;
+- three conditioning representations were compared under a common conditional-GAN configuration;
+- all nine runs completed the planned 400-epoch training schedule;
+- `transformer_text` achieved the highest measured intra-prompt diversity;
+- `transformer_text` achieved the lowest mean macro-averaged class-wise FID and KID;
+- `hash_text` showed the lowest inter-seed variability in the macro distributional metrics;
+- conditioning effects were not uniform across motif categories;
+- Friedman tests did not establish statistically significant superiority among the three strategies.
+
+## Claims not made
+
+This repository does **not** claim that:
+
+- `transformer_text` is statistically superior to all alternatives;
+- the model fully understands Balinese cultural meaning;
+- FID or KID proves cultural appropriateness;
+- the generated motifs are weaving-ready;
+- fine-grained text-image semantic alignment has been established;
+- expert evaluation has been completed;
+- LPIPS evaluation has been completed;
+- the model provides token-region alignment;
+- the model provides explicit repeat-aware structural control.
+
+## Main limitations
+
+- only 370 unique images are available;
+- only 37 test images are available;
+- each class contains only 6–14 real test samples;
+- prompts are deterministically generated from controlled vocabularies;
+- 370 image-prompt pairs contain 369 unique prompts;
+- the multilingual transformer is frozen;
+- balanced sampling does not increase the number of unique minority-class images;
+- global conditioning does not explicitly constrain spatial repetition;
+- semantic prompt compliance is not directly measured;
+- domain-expert evaluation is not completed;
+- ornament formation, repeat consistency, and woven-like microtexture remain limited.
+
+---
+
+# Running the Experiment
+
+## 1. Clone the repository
+
+```bash
+git clone https://github.com/wiwik-instiki/EndekGAN-T2I.git
+cd EndekGAN-T2I
+```
+
+## 2. Create an environment
+
+```bash
+conda create -n endekgan_t2i python=3.10 -y
+conda activate endekgan_t2i
+```
+
+## 3. Install dependencies
+
+```bash
+pip install torch torchvision torchaudio
+pip install pandas numpy matplotlib pillow tqdm scikit-learn scipy
+pip install transformers sentence-transformers accelerate
+pip install torchmetrics torch-fidelity
+pip install jupyter ipykernel
+```
+
+Optional diagnostic dependency:
+
+```bash
+pip install lpips
+```
+
+## 4. Configure the dataset path
+
+The original images are not distributed in the repository. Users with authorized access to the dataset should configure their local dataset path.
+
+```python
+from pathlib import Path
+
+DATASET_ROOT = Path("/path/to/EndekGAN_Dataset")
+```
+
+Do not rely on the original development-machine path shown in historical notebook versions.
+
+## 5. Select the conditioning mode and seed
+
+```python
+EXPERIMENT_MODE = "transformer_text"
+SEED = 42
+```
+
+Available modes:
+
+```text
+cat
+hash_text
+transformer_text
+```
+
+Experimental seeds:
+
+```text
+42
+123
+2025
+```
+
+## 6. Run the notebook
+
+The current implementation may retain the legacy notebook filename:
 
 ```bash
 jupyter notebook EndekGAN_ExpertKnowledge_TextGuided_IEEE_Experiment.ipynb
 ```
 
-Kemudian pilih:
+Then run the notebook from a clean kernel.
 
-```text
-Kernel → Restart & Run All
-```
+Because the original images are not publicly redistributed, reproducing the complete training pipeline requires authorized access to the Endek image collection.
 
 ---
 
-# 20. Struktur Folder Output
+# Repository Output Structure
+
+The existing implementation may retain legacy folder and file names.
 
 ```text
 outputs_EndekGAN_ExpertGuided_<MODE>_<RUN_ID>/
 ├── config.json
 ├── checkpoints/
-│   ├── checkpoint_epoch_0050_<MODE>.pth
-│   ├── checkpoint_epoch_0100_<MODE>.pth
-│   └── ...
 ├── samples/
-│   ├── epoch_0001_<MODE>_ema_True.png
-│   ├── epoch_0010_<MODE>_ema_True.png
-│   ├── custom_flora_<MODE>.png
-│   ├── custom_fauna_<MODE>.png
-│   ├── custom_dekoratif_<MODE>.png
-│   └── custom_geometris_<MODE>.png
 ├── logs/
 │   ├── metadata_expert_guided_used.csv
 │   ├── train_split.csv
 │   ├── val_split.csv
 │   ├── test_split.csv
 │   ├── training_log.csv
-│   ├── training_curves_<MODE>.png
 │   ├── generated_eval_index_<MODE>.csv
 │   ├── fid_kid_metrics_<MODE>.csv
-│   ├── lpips_diversity_<MODE>.csv
 │   ├── nearest_neighbor_check_<MODE>.csv
 │   ├── human_expert_evaluation_sheet_<MODE>.csv
 │   └── experiment_summary_<MODE>.json
 ├── text_embedding_cache/
-│   ├── train_<MODE>_embeddings.npy
-│   ├── train_<MODE>_index.csv
-│   ├── val_<MODE>_embeddings.npy
-│   ├── val_<MODE>_index.csv
-│   ├── test_<MODE>_embeddings.npy
-│   └── test_<MODE>_index.csv
 └── generated_eval/
     ├── flora/
     ├── fauna/
@@ -1605,36 +873,38 @@ outputs_EndekGAN_ExpertGuided_<MODE>_<RUN_ID>/
     └── geometris/
 ```
 
----
-
-# 21. Roadmap SF-EndekGAN
-
-Pengembangan berikutnya diarahkan pada:
-
-1. semantic fusion multi-skala;
-2. token–region attention;
-3. cross-attention;
-4. contrastive text–image alignment;
-5. mismatched prompt negatives;
-6. repeat-consistency loss;
-7. symmetry-aware regularization;
-8. motif-aware augmentation;
-9. multi-caption generation;
-10. lexical variation;
-11. validasi pakar;
-12. evaluasi weavability;
-13. generative precision and recall;
-14. LPIPS;
-15. bootstrap confidence interval; dan
-16. pruning atau knowledge distillation.
+The Indonesian folder labels `dekoratif` and `geometris` correspond to the manuscript categories **decorative** and **geometric**.
 
 ---
 
-# 22. Sitasi
+# Future Work
+
+Future development should focus on the limitations identified by the present experiments rather than assuming the current baseline is a final Endek generation system.
+
+Priority directions include:
+
+1. a fixed common data partition for architecture-level comparisons;
+2. cleaned and expert-validated prompts;
+3. domain-expert evaluation of generated outputs;
+4. longer training and expanded limited-data analysis;
+5. explicit text-image alignment metrics;
+6. repeat-aware structural constraints;
+7. motif-identity and symmetry-aware objectives;
+8. improved modelling of woven-like microtexture;
+9. multi-caption or linguistically varied prompt construction;
+10. perceptual diversity evaluation such as LPIPS;
+11. stronger memorization diagnostics;
+12. bootstrap confidence intervals and additional paired statistical analysis.
+
+---
+
+# Citation
+
+If you use the repository, please cite the associated manuscript:
 
 ```bibtex
-@article{rahayu_endekgan_t2i,
-  title   = {EndekGAN-T2I: An Expert-Guided Text-to-Image Conditional GAN Baseline for Balinese Endek Textile Motif Generation},
+@article{Rahayu2026EndekGANT2I,
+  title   = {EndekGAN-T2I: A Design-Knowledge-Conditioned Text-to-Image GAN Baseline for Limited-Data Balinese Endek Motif Generation},
   author  = {Rahayu G, Ni Luh Wiwik Sri and Suciati, Nanik and Siahaan, Daniel Oranova},
   journal = {Manuscript prepared for IEEE Access},
   year    = {2026},
@@ -1644,29 +914,35 @@ Pengembangan berikutnya diarahkan pada:
 
 ---
 
-# 23. Penulis
+# Authors
 
 **Ni Luh Wiwik Sri Rahayu G**  
 Doctoral Program in Informatics  
-Institut Teknologi Sepuluh Nopember, Surabaya, Indonesia
+Institut Teknologi Sepuluh Nopember (ITS), Surabaya, Indonesia
 
-**Prof. Dr. Eng. Nanik Suciati, S.Kom., M.Kom.**  
+**Nanik Suciati**  
 Department of Informatics  
-Institut Teknologi Sepuluh Nopember, Surabaya, Indonesia
+Institut Teknologi Sepuluh Nopember (ITS), Surabaya, Indonesia
 
-**Prof. Daniel Oranova Siahaan, S.Kom., M.Sc., PD.Eng.**  
+**Daniel Oranova Siahaan**  
 Department of Informatics  
-Institut Teknologi Sepuluh Nopember, Surabaya, Indonesia
+Institut Teknologi Sepuluh Nopember (ITS), Surabaya, Indonesia
 
 ---
 
-## Etika Penggunaan
+# Ethical and Cultural Use
 
-Penggunaan dataset dan generated image harus memperhatikan:
+Use of the dataset, metadata, and generated outputs should consider:
 
-- izin penggunaan citra;
-- hak cipta;
-- provenance dataset;
-- kepantasan budaya;
-- motif yang mempunyai makna sakral; dan
-- validasi pakar sebelum keluaran dinyatakan sebagai desain Endek yang sah.
+- image ownership and permissions;
+- copyright;
+- dataset provenance;
+- cultural appropriateness;
+- potentially sacred or culturally sensitive motifs; and
+- domain-expert validation before any generated output is described as an authentic or weaving-ready Endek design.
+
+---
+
+## Research status
+
+**EndekGAN-T2I is a research baseline for controlled conditioning analysis in limited-data Balinese Endek generation. It is not an autonomous cultural-design system and is not presented as a production-ready textile generator.**
