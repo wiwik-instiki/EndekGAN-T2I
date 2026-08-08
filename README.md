@@ -82,10 +82,10 @@ Three conditioning representations are evaluated using seeds **42**, **123**, an
 
 The initial collection contained **372 JPEG images** organized into four motif categories. All images passed readability validation. Exact duplicates were identified using MD5 hashes.
 
-For image \(x_i\):
+For image `x_i`:
 
-```math
-m_i = \mathrm{MD5}(x_i).
+```text
+m_i = MD5(x_i)
 ```
 
 Two exact duplicate pairs were identified; one redundant file from each pair was removed.
@@ -146,20 +146,13 @@ Representative controlled values include:
 
 ## Deterministic attribute selection
 
-Let \(V_k\) denote the controlled vocabulary for attribute group \(k\), and let \(q_{i,k}\) be the deterministic string constructed from the class label, filename, and attribute identifier.
+Let `V_k` denote the controlled vocabulary for attribute group `k`, and let `q_(i,k)` be the deterministic string constructed from the class label, filename, and attribute identifier.
 
-```math
-a_{i,k}
-=
-V_k\!\left[
-\mathrm{Int}_{16}\!\left(
-\mathrm{MD5}(q_{i,k})
-\right)
-\bmod |V_k|
-\right].
+```text
+a_(i,k) = V_k[ Int16(MD5(q_(i,k))) mod |V_k| ]
 ```
 
-Here, \(\mathrm{Int}_{16}(\cdot)\) denotes conversion of the hexadecimal MD5 digest into an integer.
+Here, `Int16(.)` denotes conversion of the hexadecimal MD5 digest into an integer.
 
 This procedure produced:
 
@@ -231,33 +224,22 @@ Validation and test preprocessing is deterministic.
 
 ## Inverse-frequency weighted sampling
 
-For training sample \(i\), let \(n_{y_i}\) denote the number of training images belonging to its class.
+For training sample `i`, let `n_(y_i)` denote the number of training images belonging to its class.
 
-```math
-\alpha_i = \frac{1}{n_{y_i}}.
+```text
+alpha_i = 1 / n_(y_i)
 ```
 
 Sampling is performed with replacement. With 296 training records, batch size 16, and `drop_last=True`:
 
-```math
-N_{\mathrm{eff}}
-=
-16
-\left\lfloor
-\frac{296}{16}
-\right\rfloor
-=
-288.
+```text
+N_eff = 16 × floor(296 / 16) = 288
 ```
 
 With four classes, the expected class exposure per epoch is:
 
-```math
-\mathbb{E}[M_k]
-=
-\frac{N_{\mathrm{eff}}}{4}
-=
-72.
+```text
+E[M_k] = N_eff / 4 = 72
 ```
 
 Weighted sampling balances exposure frequency; it does **not** create additional unique minority-class images.
@@ -272,39 +254,26 @@ All three variants retain the same main generator, discriminator, and optimizati
 
 The `cat` variant ignores prompt content and constructs a deterministic 384-dimensional sparse category representation. The category position is:
 
-```math
-j_y
-=
-\mathrm{Int}_{16}\!\left(
-\mathrm{MD5}(y)
-\right)
-\bmod 384.
+```text
+j_y = Int16(MD5(y)) mod 384
 ```
 
-The corresponding 384-dimensional vector contains one non-zero entry at \(j_y\).
+The corresponding 384-dimensional vector contains one non-zero entry at `j_y`.
 
 Because the model also uses a trainable 64-dimensional class embedding, this variant is described as a **category-conditioned baseline with deterministic label encoding**.
 
 ## 2. `hash_text`: hash-based lexical conditioning
 
-Each prompt token \(w_k\) is deterministically mapped into one of 384 bins:
+Each prompt token `w_k` is deterministically mapped into one of 384 bins:
 
-```math
-j_k
-=
-\mathrm{Int}_{16}\!\left(
-\mathrm{MD5}(w_k)
-\right)
-\bmod 384.
+```text
+j_k = Int16(MD5(w_k)) mod 384
 ```
 
-Let \(\widetilde{e}_t\) denote the accumulated token-count vector. The final lexical representation is L2-normalized:
+Let `e_tilde` denote the accumulated token-count vector. The final lexical representation is L2-normalized:
 
-```math
-e_t^{(\mathrm{hash})}
-=
-\frac{\widetilde{e}_t}
-{\left\|\widetilde{e}_t\right\|_2+\varepsilon}.
+```text
+e_t^(hash) = e_tilde / ( ||e_tilde||_2 + epsilon )
 ```
 
 This representation captures lexical occurrence but does not explicitly model word order or semantic relationships.
@@ -327,25 +296,16 @@ Normalization       : L2
 Fine-tuning         : disabled
 ```
 
-Let \(h_j\) denote token embedding \(j\), and \(m_j\in\{0,1\}\) its attention-mask value. Masked mean pooling is:
+Let `h_j` denote token embedding `j`, and `m_j ∈ 0,1` its attention-mask value. Masked mean pooling is:
 
-```math
-\bar{e}_t
-=
-\frac{
-\sum_{j=1}^{L} m_j h_j
-}{
-\sum_{j=1}^{L} m_j
-}.
+```text
+e_bar_t = ( sum_(j=1..L) m_j h_j ) / ( sum_(j=1..L) m_j )
 ```
 
 The pooled representation is then normalized:
 
-```math
-e_t^{(\mathrm{tr})}
-=
-\frac{\bar{e}_t}
-{\left\|\bar{e}_t\right\|_2+\varepsilon}.
+```text
+e_t^(tr) = e_bar_t / ( ||e_bar_t||_2 + epsilon )
 ```
 
 Transformer parameters remain frozen, and the text embeddings are computed before adversarial training.
@@ -356,50 +316,49 @@ Transformer parameters remain frozen, and the text embeddings are computed befor
 
 The architecture contains:
 
-- a 384-dimensional text/category representation \(e_t\);
-- a trainable 64-dimensional class embedding \(e_y\);
+- a 384-dimensional text/category representation `e_t`;
+- a trainable 64-dimensional class embedding `e_y`;
 - separate generator- and discriminator-side condition projectors;
-- a 128-dimensional latent vector \(z\);
-- a conditional generator \(G\); and
-- a projection discriminator \(D\).
+- a 128-dimensional latent vector `z`;
+- a conditional generator `G`; and
+- a projection discriminator `D`.
 
 | Component | Dimension |
 |---|---:|
-| Latent noise \(z\) | 128 |
-| Text/category representation \(e_t\) | 384 |
-| Class embedding \(e_y\) | 64 |
+| Latent noise `z` | 128 |
+| Text/category representation `e_t` | 384 |
+| Class embedding `e_y` | 64 |
 | Concatenated text-class representation | 448 |
-| Generator condition \(c_G\) | 256 |
-| Discriminator condition \(c_D\) | 256 |
+| Generator condition `c_G` | 256 |
+| Discriminator condition `c_D` | 256 |
 | Generated RGB image | 3 × 256 × 256 |
 
 ## Separate condition projectors
 
-```math
-c_G = P_G([e_t;e_y]),
-\qquad
-c_D = P_D([e_t;e_y]),
+```text
+c_G = P_G([e_t ; e_y])
+c_D = P_D([e_t ; e_y])
 ```
 
 with
 
-```math
-c_G,c_D \in \mathbb{R}^{256}.
+```text
+c_G, c_D ∈ R^256
 ```
 
 ## Conditional generation
 
-```math
-z \sim \mathcal{N}(0,I_{128}),
+```text
+z ~ N(0, I_128)
 ```
 
 and
 
-```math
-\widehat{x} = G(z,c_G).
+```text
+x_hat = G(z, c_G)
 ```
 
-The concatenated latent-condition vector is projected into a \(4\times4\) feature tensor and progressively upsampled to \(256\times256\). The final RGB output uses `tanh`.
+The concatenated latent-condition vector is projected into a `4 × 4` feature tensor and progressively upsampled to `256 × 256`. The final RGB output uses `tanh`.
 
 Generator parameter count:
 
@@ -409,17 +368,10 @@ Generator parameter count:
 
 ## Projection discriminator
 
-Let \(h(x)\in\mathbb{R}^{512}\) denote the image representation produced by the discriminator after convolutional feature extraction and global sum pooling.
+Let `h(x) ∈ R^512` denote the image representation produced by the discriminator after convolutional feature extraction and global sum pooling.
 
-```math
-D(x,t,y)
-=
-u^\top h(x)
-+
-\left\langle
-h(x),
-V c_D
-\right\rangle.
+```text
+D(x, t, y) = u^T h(x) + < h(x), V c_D >
 ```
 
 The first term represents unconditional realism, while the projection term represents image-condition compatibility.
@@ -442,92 +394,59 @@ Discriminator parameter count:
 
 ## Discriminator hinge loss
 
-```math
-\mathcal{L}^{\mathrm{hinge}}_D
-=
-\mathbb{E}_{x,t,y}
-\left[
-\max\left(0,1-D(x,t,y)\right)
-\right]
-+
-\mathbb{E}_{z,t,y}
-\left[
-\max\left(0,1+D(\widehat{x},t,y)\right)
-\right].
+```text
+L_D^(hinge) =
+E_(x,t,y)[ max(0, 1 - D(x,t,y)) ]
++ E_(z,t,y)[ max(0, 1 + D(x_hat,t,y)) ]
 ```
 
 The generated sample is:
 
-```math
-\widehat{x}=G(z,c_G),
+```text
+x_hat = G(z, c_G)
 ```
 
-while the discriminator uses the discriminator-side condition \(c_D=P_D([e_t;e_y])\).
+while the discriminator uses the discriminator-side condition `c_D = P_D([e_t ; e_y])`.
 
 ## Generator adversarial loss
 
-```math
-\mathcal{L}^{\mathrm{adv}}_G
-=
--
-\mathbb{E}_{z,t,y}
-\left[
-D(\widehat{x},t,y)
-\right].
+```text
+L_G^(adv) = - E_(z,t,y)[ D(x_hat,t,y) ]
 ```
 
 ## Feature-matching loss
 
-Let \(B\) denote the batch size and \(h(\cdot)\) the discriminator feature representation.
+Let `B` denote the batch size and `h(.)` the discriminator feature representation.
 
-```math
-\mathcal{L}_{FM}
-=
-\left\|
-\frac{1}{B}\sum_{i=1}^{B}h(x_i)
--
-\frac{1}{B}\sum_{i=1}^{B}h(\widehat{x}_i)
-\right\|_1.
+```text
+L_FM =
+|| (1/B) sum_(i=1..B) h(x_i)
+ - (1/B) sum_(i=1..B) h(x_hat_i) ||_1
 ```
 
 The complete generator objective is:
 
-```math
-\mathcal{L}_G
-=
-\mathcal{L}^{\mathrm{adv}}_G
-+
-5\mathcal{L}_{FM}.
+```text
+L_G = L_G^(adv) + 5 L_FM
 ```
 
 ## Lazy R1 regularization
 
 The unscaled R1 term is:
 
-```math
-R_1
-=
-\frac{\gamma}{2}
-\mathbb{E}_{x,t,y}
-\left[
-\left\|
-\nabla_x D(x,t,y)
-\right\|_2^2
-\right],
-\qquad
-\gamma=5.
+```text
+R_1 = (gamma / 2) E_(x,t,y)[ || grad_x D(x,t,y) ||_2^2 ]
+gamma = 5
 ```
 
 R1 is evaluated every **16 discriminator updates** using lazy regularization. On an R1 update, the implementation scales the regularization contribution by the interval to preserve its expected strength across updates.
 
 ## Exponential moving average
 
-```math
-\theta_{\mathrm{EMA}}^{(k)}
-=
-0.999\,\theta_{\mathrm{EMA}}^{(k-1)}
-+
-0.001\,\theta_G^{(k)}.
+```text
+theta_EMA^(k) =
+0.999 theta_EMA^(k-1)
++ 0.001 theta_G^(k)
 ```
 
 The EMA generator is used for sampling and evaluation.
@@ -549,10 +468,10 @@ The EMA generator is used for sampling and evaluation.
 | Condition dimension | 256 |
 | Generator parameters | 6,171,299 |
 | Discriminator parameters | 7,295,713 |
-| Generator learning rate | \(2\times10^{-4}\) |
-| Discriminator learning rate | \(1\times10^{-4}\) |
+| Generator learning rate | `2 × 10^-4` |
+| Discriminator learning rate | `1 × 10^-4` |
 | Optimizer | Adam |
-| Adam \((\beta_1,\beta_2)\) | \((0,0.999)\) |
+| Adam `(beta_1, beta_2)` | `(0, 0.999)` |
 | Feature-matching weight | 5.0 |
 | R1 coefficient | 5.0 |
 | R1 interval | every 16 discriminator updates |
@@ -593,24 +512,12 @@ Because only 6-14 real test images are available per class, class-wise FID and K
 
 ## Fréchet Inception Distance
 
-For real-feature mean and covariance \((\mu_r,\Sigma_r)\) and generated-feature mean and covariance \((\mu_g,\Sigma_g)\):
+For real-feature mean and covariance `(mu_r, Sigma_r)` and generated-feature mean and covariance `(mu_g, Sigma_g)`:
 
-```math
-\mathrm{FID}
-=
-\left\|
-\mu_r-\mu_g
-\right\|_2^2
-+
-\mathrm{Tr}
-\left(
-\Sigma_r+\Sigma_g
--
-2
-\left(
-\Sigma_r\Sigma_g
-\right)^{1/2}
-\right).
+```text
+FID =
+|| mu_r - mu_g ||_2^2
++ Tr( Sigma_r + Sigma_g - 2 (Sigma_r Sigma_g)^(1/2) )
 ```
 
 Lower FID indicates smaller feature-distribution distance.
@@ -619,47 +526,30 @@ Lower FID indicates smaller feature-distribution distance.
 
 KID is the squared maximum mean discrepancy between real and generated Inception-feature distributions:
 
-```math
-\mathrm{KID}
-=
-\mathrm{MMD}^2
-\left(
-\mathcal{F}_r,
-\mathcal{F}_g
-\right).
+```text
+KID = MMD^2(F_r, F_g)
 ```
 
 Lower KID indicates smaller distributional discrepancy.
 
 ## Intra-prompt diversity
 
-For \(m\) images generated under the same conditioning setting:
+For `m` images generated under the same conditioning setting:
 
-```math
-\mathrm{Diversity}
-=
-\frac{2}{m(m-1)}
-\sum_{a<b}
-\frac{
-\left\|
-\widehat{x}_a-\widehat{x}_b
-\right\|_2^2
-}{
-3HW
-}.
+```text
+Diversity =
+[ 2 / (m(m-1)) ] ×
+sum_(a<b) [ || x_hat_a - x_hat_b ||_2^2 / (3 H W) ]
 ```
 
 Higher values indicate greater output variation under the same conditioning setting. This measure does **not** independently establish semantic prompt-image correspondence.
 
 ## Macro-averaged class-wise metrics
 
-For a class-wise metric \(M_k\):
+For a class-wise metric `M_k`:
 
-```math
-M_{\mathrm{macro}}
-=
-\frac{1}{4}
-\sum_{k=1}^{4}M_k.
+```text
+M_macro = (1/4) sum_(k=1..4) M_k
 ```
 
 The reported macro FID and macro KID are therefore **unweighted averages of class-wise metrics**, not pooled global FID/KID.
@@ -673,7 +563,7 @@ FID : χ²(2) = 5.167, p = 0.0755
 KID : χ²(2) = 4.167, p = 0.1245
 ```
 
-Neither test reaches the conventional significance threshold \(\alpha=0.05\).
+Neither test reaches the conventional significance threshold `alpha = 0.05`.
 
 ## Evaluations not claimed as completed
 
