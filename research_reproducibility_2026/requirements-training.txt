@@ -1,0 +1,13 @@
+# Optional heavy experiment dependencies (not auto-installed).
+# Resolve a GPU-compatible torch/torchvision build explicitly for your CUDA driver.
+-r requirements.txt
+torch
+torchvision
+torchmetrics
+scipy
+scikit-learn
+lpips
+sentence-transformers
+tqdm
+transformers
+# The original adapted DF-GAN code additionally uses its pinned upstream Git checkout.

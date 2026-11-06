@@ -1,0 +1,42 @@
+[
+  {
+    "repo_file": "notebooks/01_dataset_and_prompt_audit.ipynb",
+    "source_file": "EndekGAN_T2I_Dataset_Method_Analysis.ipynb",
+    "source_sha256": "d459103e317653c4881f06484787137d24f95c531989157e2fcd31ded4708e48",
+    "size_cleaned": 37950,
+    "patch_count": 2,
+    "historical": false
+  },
+  {
+    "repo_file": "notebooks/02_internal_conditioning_seam_ablation.ipynb",
+    "source_file": "V5_internal_ablation_clean.ipynb",
+    "source_sha256": "e37f98da00fda2368bfd062b2a135b646472e8487f43972f409cd92a66ac1afe",
+    "size_cleaned": 103878,
+    "patch_count": 0,
+    "historical": false
+  },
+  {
+    "repo_file": "notebooks/03_external_dfgan_minilm.ipynb",
+    "source_file": "V6_DFGAN_StyleGAN2ADA_pipeline_clean.ipynb",
+    "source_sha256": "12fd521d2188d6721faef9d51260e29b88ecdae7542957512306b88c6bebdb9f",
+    "size_cleaned": 42158,
+    "patch_count": 1,
+    "historical": false
+  },
+  {
+    "repo_file": "notebooks/04_diagnostics_original.ipynb",
+    "source_file": "EndekGAN_EVALUATION_NOTEBOOK.ipynb",
+    "source_sha256": "ba913b08d4c83a3e9349c2520f0346f55a978c7d47f52a217ff82017e1fd38d3",
+    "size_cleaned": 6295,
+    "patch_count": 5,
+    "historical": false
+  },
+  {
+    "repo_file": "notebooks/05_master_recap_original.ipynb",
+    "source_file": "EndekGAN_T2I_Master_Experiment_Recap.ipynb",
+    "source_sha256": "2a86354004188bb5a504f1ee735ea015d033250e93e36b490f816ff2adb5e083",
+    "size_cleaned": 39910,
+    "patch_count": 3,
+    "historical": false
+  }
+]

@@ -1,0 +1,26 @@
+{
+  "status": "public-evidence and notebook-orchestration execution verified",
+  "source_run_csv_sha256": "647b8dde213fc66bd6c7479171e54d4b8c6b08a189593bf4d9e66ea27ef5e7a4",
+  "source_notebook_files": 5,
+  "master_notebooks": 1,
+  "public_quantitative_figures": 4,
+  "completed_model_seed_runs": 21,
+  "individual_image_evaluations_in_private_archive": 10752,
+  "seed42_clip_only": true,
+  "trained_during_release_build": false,
+  "raw_image_data_included": false,
+  "model_checkpoints_included": false,
+  "expert_ratings_claimed": false,
+  "stylegan2_baseline_trained": false,
+  "full_gpu_training_replay_tested": false,
+  "full_image_level_re_evaluation_tested": false,
+  "master_evidence_default_tested": true,
+  "warnings": [
+    "Full training and raw-image reproduction require separately authorized source assets.",
+    "The notebook default avoids heavy training. User must explicitly enable re-training.",
+    "No software license is assigned; author rights and repository visibility require review."
+  ],
+  "final_paper_figures_embedded_in_root_readme": 10,
+  "supplementary_seed_image_panels": 6,
+  "historical_notebooks_excluded_from_paper_code": true
+}

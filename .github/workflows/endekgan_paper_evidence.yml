@@ -1,0 +1,24 @@
+name: EndekGAN-T2I scientific evidence validation
+on:
+  push:
+    paths:
+      - 'research_reproducibility_2026/**'
+      - 'paper_figures/**'
+      - 'supplementary_figures/**'
+      - 'README.md'
+      - '.github/workflows/endekgan_paper_evidence.yml'
+  pull_request:
+jobs:
+  validate-paper-experiments:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install audit requirements
+        run: python -m pip install -r research_reproducibility_2026/requirements.txt
+      - name: Validate experiment results, complete figure gallery, and master notebook
+        run: python -m unittest discover -s research_reproducibility_2026/tests -v
+      - name: Recompute public figures (no training)
+        run: python research_reproducibility_2026/scripts/replot_paper_quant_figures.py --output research_reproducibility_2026/local_runs/CI_figure_check

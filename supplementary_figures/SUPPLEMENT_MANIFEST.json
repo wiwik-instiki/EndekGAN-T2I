@@ -1,0 +1,26 @@
+{
+  "FIG_08A_RQ1_CONDITIONING_SEED_123.png": {
+    "sha256": "5c4e53ca479a20e23b2f43b7ffb477c9d7212d24f60f0ba46dc3b300a42a9899",
+    "bytes": 1883269
+  },
+  "FIG_08B_PROPOSED_VS_COMPARATORS_SEED_123.png": {
+    "sha256": "7246ff3568112435b8ee5b8812e9ddd4292b7dc37cc68ba11d4a65bde7b19392",
+    "bytes": 1921011
+  },
+  "FIG_09_REPEAT_TILES_SEED_123.jpg": {
+    "sha256": "5f477210bc9402149e4f8818563daf42910d0ce2545a4f116fec9fe278ffcaf7",
+    "bytes": 1213778
+  },
+  "FIG_08A_RQ1_CONDITIONING_SEED_2025.png": {
+    "sha256": "9990e4e37e976697c2c558eb2cd5983dff1585cdae14c1a237ea031d415869ef",
+    "bytes": 1857521
+  },
+  "FIG_08B_PROPOSED_VS_COMPARATORS_SEED_2025.png": {
+    "sha256": "d27fb71a6617de696b60708ed8cd27ee4b9e6b842e791f5ba36f0cb537d8a5bb",
+    "bytes": 1865941
+  },
+  "FIG_09_REPEAT_TILES_SEED_2025.jpg": {
+    "sha256": "e3ea2c369f7f3da726561ef6f5ccdca2d2173665acb4e4b0523dcd088f37793a",
+    "bytes": 1117847
+  }
+}

@@ -1,0 +1,112 @@
+[
+  {
+    "figure": 1,
+    "file": "paper_figures/figure_01_endek_dataset_samples.png",
+    "caption": "Representative Endek motifs: (a) flora, (b) fauna, (c) decorative, and (d) geometric. Grayscale display is for visual comparison only.",
+    "source": "embedded-in-current-IEEE-manuscript",
+    "pixels": [
+      754,
+      1248
+    ],
+    "sha256": "d2adb133595b802a389dea895361120b3d5c1943ffce3d8b42b1e5dfc427828c"
+  },
+  {
+    "figure": 2,
+    "file": "paper_figures/figure_02_research_framework.png",
+    "caption": "Research framework of the EndekGAN-T2I study",
+    "source": "embedded-in-current-IEEE-manuscript",
+    "pixels": [
+      1139,
+      556
+    ],
+    "sha256": "ea85eda53ad744c747e06e12ab45b58fe113e30d79e5ea0b56ac3889eee22f0c"
+  },
+  {
+    "figure": 3,
+    "file": "paper_figures/figure_03_proposed_seam_aware_architecture.png",
+    "caption": "Proposed Seam-Aware EndekGAN-T2I. Colored modules distinguish domain-conditioned synthesis from the four-pixel opposing-border regularizer added to the generator loss.",
+    "source": "embedded-in-current-IEEE-manuscript",
+    "pixels": [
+      1299,
+      732
+    ],
+    "sha256": "4553058a75f140044cce2340e284110de6b602d40473adf61a678f1b9226cca5"
+  },
+  {
+    "figure": 4,
+    "file": "paper_figures/figure_04_fid_comparison.png",
+    "caption": "Exploratory class-macro FID across three seeds (mean ± sample SD; lower is better). Hatched bars denote the two seam-aware variants.",
+    "source": "embedded-in-current-IEEE-manuscript",
+    "pixels": [
+      1722,
+      917
+    ],
+    "sha256": "c68bee3c824a077b8f532a55ec4b64dadef418dadd70eb6f2da3291864fe6b9e"
+  },
+  {
+    "figure": 5,
+    "file": "paper_figures/figure_05_kid_comparison.png",
+    "caption": "Exploratory class-macro KID across three seeds (mean ± sample SD; lower is better).",
+    "source": "embedded-in-current-IEEE-manuscript",
+    "pixels": [
+      1722,
+      917
+    ],
+    "sha256": "c70a1552cc19d9f17ce9792281f64cf1bb3735355202d0d50073e424a90b97c4"
+  },
+  {
+    "figure": 6,
+    "file": "paper_figures/figure_06_fid_seam_tradeoff.png",
+    "caption": "Empirical FID–seam-gap trade-off. Each point represents one method averaged across three seeds; both axes favor smaller values.",
+    "source": "embedded-in-current-IEEE-manuscript",
+    "pixels": [
+      1744,
+      983
+    ],
+    "sha256": "0c87c309da54a1883de289ad3e6c21828c9d9860249fd2eb4dbe9b68533ca2bd"
+  },
+  {
+    "figure": 7,
+    "file": "paper_figures/figure_07_lpips_variability.png",
+    "caption": "Within-model class-macro LPIPS variation for six internal configurations only (three-seed mean ± sample SD).",
+    "source": "embedded-in-current-IEEE-manuscript",
+    "pixels": [
+      1721,
+      841
+    ],
+    "sha256": "eada603789a9ff7f19f65d00e84a1eda41369286724b5b561b1091975e7b0a9c"
+  },
+  {
+    "figure": 8,
+    "file": "paper_figures/figure_08_conditioning_image_comparison.png",
+    "caption": "Representative source-matched Endek images comparing real test patterns, category conditioning, Hash-Text, and Transformer; seed 42.",
+    "source": "embedded-in-current-IEEE-manuscript",
+    "pixels": [
+      1102,
+      1130
+    ],
+    "sha256": "bf7490ccaf34f3cf8337f7cfd6b6e17656050bcfd95fce622fe081856920bda5"
+  },
+  {
+    "figure": 9,
+    "file": "paper_figures/figure_09_proposed_vs_baselines_images.png",
+    "caption": "Actual Endek test images and generated counterparts under standard Transformer, proposed seam-aware Transformer, and adapted DF-GAN–MiniLM (seed 42). The DF-GAN latent noise is independent.",
+    "source": "embedded-in-current-IEEE-manuscript",
+    "pixels": [
+      1102,
+      1130
+    ],
+    "sha256": "4988a6626abd9e6abb44758ad36a7eee9d5a9d1b92269b7b3eb54c5a75686435"
+  },
+  {
+    "figure": 10,
+    "file": "paper_figures/figure_10_repeated_tile_visualization.jpg",
+    "caption": "Repeated-tile inspection of the archived proposed and baseline output configurations, seed 42; four repetitions reveal tile junctions.",
+    "source": "embedded-in-current-IEEE-manuscript",
+    "pixels": [
+      1832,
+      2477
+    ],
+    "sha256": "a335e3bd66781203da0cf95af283a4d9e17246850fa9103a7b6532f6e2e258e4"
+  }
+]
