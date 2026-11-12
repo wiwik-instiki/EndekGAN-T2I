@@ -1,8 +1,21 @@
-# EndekGAN-T2I — Seam-Aware Text-to-Image Generation of Balinese Endek Motifs
+# EndekGAN-T2I: Seam-Aware Text-to-Image GAN for Balinese Endek Motif Synthesis under Limited Data
 
-**Research repository for the revised IEEE manuscript.** This page presents the final controlled experimental protocol and **all Figure 1–10 images embedded in the paper**, together with the research code used to train and evaluate internal conditioning variants, seam-aware configurations, and the independently adapted DF-GAN–MiniLM baseline.
+**Research repository for an ongoing doctoral research study on limited-data conditional image synthesis and Balinese Endek textile motifs.** This page presents the final controlled experimental protocol and **all Figure 1–10 images embedded in the paper**, together with the research code used to train and evaluate internal conditioning variants, seam-aware configurations, and the independently adapted DF-GAN–MiniLM baseline.
 
 > **Research status:** 21 completed model–seed runs (six internal configurations plus an adapted external comparator, each across seeds 42, 123 and 2025). No additional or fabricated experiment is implied by repository regeneration. The class-macro FID/KID scores are exploratory because the held-out reference population has only 37 real images.
+
+
+## Scientific motivation and cultural context
+
+Balinese Endek is a traditional handwoven textile and a culturally situated design domain. The Indonesian Directorate General of Intellectual Property records Balinese Endek as communal intellectual property / traditional knowledge. This supplies a documented heritage context for studying design-oriented motif synthesis; it does **not** prove that a generated motif is culturally authentic, artistically acceptable, or suitable for weaving. Source: [Indonesia Directorate General of Intellectual Property — Balinese Endek and Songket communal IP registration](https://dgip.go.id/index.php/artikel/detail-artikel-berita/bali-catatkan-kain-endek-dan-songket-sebagai-kekayaan-intelektual-komunal?kategori=ki-komunal).
+
+The curated 370-image research collection (296 training / 37 validation / 37 test) represents the **currently available, access-controlled samples**, not the full diversity of Endek designs. Data scarcity is the experimental setting and motivation, not evidence that the model can generalize across undocumented motif families. Research claims are restricted to the controlled computational comparisons actually completed.
+
+The study shows that an explicit four-pixel opposing-border L1 penalty can lower a measured pixel-level seam gap by **39.8% with class embedding** and **45.6% without class embedding**, while exploratory FID/KID and measured perceptual variability may worsen. It therefore reports a **boundary-continuity versus image-fidelity/diversity trade-off**, not universal visual-quality superiority or independently validated text-to-image semantic accuracy.
+
+**Research status:** Manuscript in preparation for journal submission. This repository makes no claim of journal acceptance, peer-review endorsement or published DOI. Legacy materials using the earlier IEEE formatting are retained only as part of the research history.
+
+**Prospective next stages (not completed or claimed as present results):** rights-cleared dataset expansion covering more motif families; independent Endek expert annotation and prompt validation; culturally appropriate generative evaluation; additional data-efficient baselines and seam/fidelity multi-objective learning; and expert-led assessment of possible textile-design or weaving implications. See [Research roadmap](docs/RESEARCH_ROADMAP.md).
 
 ### One notebook: complete experiment entry point
 
@@ -15,7 +28,7 @@ The notebook calls the code for:
 4. **Image evaluation** — class- and prompt-matched generated panels, opposite-edge seam gap, qualitative tile repetitions, and saved diagnostic outputs.
 5. **Three-seed numerical and paper-level figures** — FID, KID, within-model LPIPS, trade-off, real-vs-generated examples, and RQ1–RQ3 interpretation.
 
-**Re-running the notebook with default settings does not retrain models.** It verifies the archived, published 21-run evidence and shows the manuscript figure gallery. Full CPU/CUDA retraining is optional and gated behind separately authorized dataset files and explicit configuration. See [Execution Modes](research_reproducibility_2026/docs/EXECUTION_MODES.md), [Paper-to-code traceability](research_reproducibility_2026/docs/EXPERIMENT_TO_PAPER.md), and [Data/Image rights](research_reproducibility_2026/docs/DATA_RIGHTS.md).
+**Re-running the notebook with default settings does not retrain models.** It verifies the archived 21-run evidence and shows the manuscript figure gallery. Full CPU/CUDA retraining is optional and gated behind separately authorized dataset files and explicit configuration. See [Execution Modes](research_reproducibility_2026/docs/EXECUTION_MODES.md), [Paper-to-code traceability](research_reproducibility_2026/docs/EXPERIMENT_TO_PAPER.md), and [Data/Image rights](research_reproducibility_2026/docs/DATA_RIGHTS.md).
 
 ## Results overview
 
@@ -35,7 +48,7 @@ These are **three-seed means, not newly trained scores**. Standard deviations, p
 
 ## Full paper figure gallery — Figures 1–10
 
-Every numbered image below is taken from the figure embedded in the reviewed IEEE manuscript. **The displayed gallery mirrors the paper's Figure 1–10 numbering.** Figure 1 combines the four category panels (a–d) extracted from Word; Figure 8–10 reproduce actual archived image comparisons for seed 42. Supplementary panels for seeds 123 and 2025 appear further down.
+Every numbered image below is taken from the figure embedded in the research manuscript. **The displayed gallery mirrors the research manuscript's Figure 1–10 numbering.** Figure 1 combines the four category panels (a–d) extracted from Word; Figure 8–10 reproduce actual archived image comparisons for seed 42. Supplementary panels for seeds 123 and 2025 appear further down.
 
 ### Figure 1. Dataset sampling (Flora, Fauna, Decorative, Geometric)
 
@@ -150,7 +163,7 @@ The following figure sets were produced from the same archived experiment output
 
 **Read first:** [Repository README for the full workflow](research_reproducibility_2026/README.md) · [Raw-image access and ethics](research_reproducibility_2026/docs/DATA_RIGHTS.md) · [Source provenance](research_reproducibility_2026/docs/SOURCE_MANIFEST.json).
 
-The public repository includes the **paper's printed/embedded images**, but does not include the full raw Endek corpus, trained checkpoints or private expert-rater mappings. Recreating image experiments from scratch requires authorized access to these source materials. Some panels depict example real Endek images; confirm image-release rights before pushing to a public repository.
+The public repository includes the **research manuscript's embedded images**, but does not include the full raw Endek corpus, trained checkpoints or private expert-rater mappings. Recreating image experiments from scratch requires authorized access to these source materials. Some panels depict example real Endek images; confirm image-release rights before pushing to a public repository.
 
 **Research limitations:** No completed blinded expert rating, motif-specific semantic compliance validation, or weaving trial is claimed. The multilingual CLIP diagnostic is available for seed 42 only. The original study did not produce a trained StyleGAN2-ADA comparator. The demonstrated improvement is opposing-border continuity; FID, KID, and perceptual variability can deteriorate.
 
